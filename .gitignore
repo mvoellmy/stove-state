@@ -1,0 +1,10 @@
+
+# Data Images
+*.png
+*.jpg
+
+# Data Videos
+*.mp4
+
+# Zip files
+*.gz
