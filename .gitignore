@@ -5,6 +5,10 @@
 
 # Data Videos
 *.mp4
+*.avi
 
 # Zip files
 *.gz
+
+# Text files
+*.txt
