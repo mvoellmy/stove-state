@@ -10,5 +10,5 @@
 # Zip files
 *.gz
 
-# Text files
-*.txt
+# PyCharm
+.idea/
