@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Easy Record Exec
+Comment=
+Exec=  python3 /home/pi/Documents/Repositories/stove-state/src/easy_record.py
+StartupNotify=false
+Terminal=true
+Hidden=false
