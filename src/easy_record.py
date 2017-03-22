@@ -22,7 +22,7 @@ while True:
 
         with picamera.PiCamera() as camera:
                 camera.resolution = (1640, 1232) # full FOV  
-                file_name = time.strftime("%Y-%m-%d-%H:%M:%S") + '_' + file_name + '.h264'
+                file_name = time.strftime("%Y-%m-%d-%H_%M_%S") + '_' + file_name + '.h264'
                 path = path + file_name
                 camera.start_recording(path)
 
