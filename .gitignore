@@ -10,5 +10,6 @@
 # Zip files
 *.gz
 
-# Text files
-*.txt
+# PyCharm
+.idea/
+*.DS_Store
