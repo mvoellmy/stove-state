@@ -1,0 +1,3 @@
+[paths]
+videos = ../data/recorded/videos/
+labels = ../data/recorded/labels/
