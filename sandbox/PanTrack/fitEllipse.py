@@ -1,17 +1,19 @@
 import numpy as np
 from numpy.linalg import eig, inv
 
+
 def fitEllipse(x,y):
     x = x[:,np.newaxis]
     y = y[:,np.newaxis]
-    D =  np.hstack((x*x, x*y, y*y, x, y, np.ones_like(x)))
+    D = np.hstack((x*x, x*y, y*y, x, y, np.ones_like(x)))
     S = np.dot(D.T,D)
     C = np.zeros([6,6])
     C[0,2] = C[2,0] = 2; C[1,1] = -1
-    E, V =  eig(np.dot(inv(S), C))
+    E, V = eig(np.dot(inv(S), C))
     n = np.argmax(np.abs(E))
     a = V[:,n]
     return a
+
 
 def ellipse_center(a):
     b,c,d,f,g,a = a[1]/2, a[2], a[3]/2, a[4]/2, a[5], a[0]
@@ -31,9 +33,11 @@ def ellipse_axis_length( a ):
     up = 2*(a*f*f+c*d*d+g*b*b-2*b*d*f-a*c*g)
     down1=(b*b-a*c)*( (c-a)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
     down2=(b*b-a*c)*( (a-c)*np.sqrt(1+4*b*b/((a-c)*(a-c)))-(c+a))
-    res1=np.sqrt(up/down1)
-    res2=np.sqrt(up/down2)
+    res1=np.sqrt(abs(up/down1))
+    res2=np.sqrt(abs(up/down2))
+
     return np.array([res1, res2])
+
 
 def ellipse_angle_of_rotation2( a ):
     b,c,d,f,g,a = a[1]/2, a[2], a[3]/2, a[4]/2, a[5], a[0]
@@ -47,28 +51,3 @@ def ellipse_angle_of_rotation2( a ):
             return np.arctan(2*b/(a-c))/2
         else:
             return np.pi/2 + np.arctan(2*b/(a-c))/2
-
-arc = 0.8
-R = np.arange(0,arc*np.pi, 0.01)
-x = 1.5*np.cos(R) + 2 + 0.1*np.random.rand(len(R))
-y = np.sin(R) + 1. + 0.1*np.random.rand(len(R))
-
-a = fitEllipse(x,y)
-center = ellipse_center(a)
-#phi = ellipse_angle_of_rotation(a)
-phi = ellipse_angle_of_rotation2(a)
-axes = ellipse_axis_length(a)
-
-print("center = ",  center)
-print("angle of rotation = ",  phi)
-print("axes = ", axes)
-
-a, b = axes
-xx = center[0] + a*np.cos(R)*np.cos(phi) - b*np.sin(R)*np.sin(phi)
-yy = center[1] + a*np.cos(R)*np.sin(phi) + b*np.sin(R)*np.cos(phi)
-
-
-from pylab import *
-plot(x,y)
-plot(xx,yy, color = 'red')
-show()
