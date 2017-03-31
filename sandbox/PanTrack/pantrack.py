@@ -10,11 +10,13 @@ img_path = '../../data/stills/stove_left_on.PNG'
 img_path = '../../data/stills/boiling_water.PNG'
 img_path = '../../data/stills/stove_left_on.PNG'
 img_path = '../../data/stills/hot_butter_in_pan.PNG'
+img_path = '../../data/stills/stove_top.PNG'
 img = cv2.imread(img_path)
 
 _use_sift = False
 _plot_canny = False
-_fit_ellipse = True
+_fit_ellipse = False
+_find_stove = False
 
 def histogram_equalization(img):
     hist, bins = np.histogram(img.flatten(), 256, [0, 256])
@@ -66,26 +68,35 @@ contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 x = []
 y = []
 edges = []
+screenCnt = None
 
 for contour in contours:
     if True:
-
         print(cv2.isContourConvex(contour))
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.02*perimeter, True)
 
-        mask = np.zeros(img.shape[:2], np.uint8)
-        cv2.drawContours(mask, contour, -1, 255, -1)
-        # cv2.drawContours(img, [contour], -1, (0, 255, 0), 1)
-        cv2.imshow("Contours", mask)
-        print("printed contour")
-        coords = contour[:, 0]
-        x = coords[:, 0]
-        y = coords[:, 1]
+        if _find_stove:
 
-        cv2.waitKey(0)
+            if len(approx) == 4:
+                screenCnt = approx
+                cv2.drawContours(img, [screenCnt], -1, (0, 255, 0), 3)
+                cv2.imshow("Game Boy Screen", img)
+                cv2.waitKey(0)
+                break
+        else:
+            mask = np.zeros(img.shape[:2], np.uint8)
+            cv2.drawContours(mask, contour, -1, 255, -1)
+            # cv2.drawContours(img, [contour], -1, (0, 255, 0), 1)
+            cv2.imshow("Contours", mask)
+            print("printed contour")
+            coords = contour[:, 0]
+            x = coords[:, 0]
+            y = coords[:, 1]
 
-    if _fit_ellipse:
+            cv2.waitKey(0)
+
+    if _fit_ellipse and not _find_stove:
         print("fitting ellipse")
 
         shape = contour.shape
@@ -117,5 +128,3 @@ for contour in contours:
         # show()
 
         # cv2.ellipse(img, (int(center[0]), int(center[1])), (int(axes[0]), int(axes[1])), int(phi*180/3.14), 0, 360, 255 , 1)
-
-
