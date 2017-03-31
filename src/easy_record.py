@@ -43,7 +43,7 @@ class InputThread(threading.Thread):
             self.stop_flag = True
         elif self.list:
             t_delta = time.time() - self.t_start
-            self.label_file.write("{:.3f}, {} \n".format(t_delta, self.list[0]))
+            self.label_file.write("{:.2f} {} \n".format(t_delta, self.list[0]))
             # self.label_file.write("{}".format(t_delta))
 
         self.list = []
