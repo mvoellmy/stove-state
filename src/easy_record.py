@@ -14,7 +14,7 @@ class InputThread(threading.Thread):
     """ Thread continuously listening for keyboard inputs and so they can be used for labeling.
     """
 
-    def __init__(self, t_start, path_labels, rec_name):
+    def __init__(self, _t_start, path_labels, rec_name):
         threading.Thread.__init__(self)
         self.t_start = _t_start
         self.stop_flag = False
