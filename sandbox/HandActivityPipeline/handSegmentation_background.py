@@ -10,7 +10,7 @@ import cv2
 import os
 
 #cap = cv2.VideoCapture("../../data/place_noodles.mp4")
-cap = cv2.VideoCapture("../../../../Polybox/stove-state-data/salmon_noodles.mp4")
+cap = cv2.VideoCapture("../../../../Polybox/Shared/stove-state-data/ssds/salmon_noodles.mp4")
 
 count = 0
 s = 1

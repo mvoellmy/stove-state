@@ -14,7 +14,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 pad = 1
 
-frame_test = cv2.imread('../../data/In-airGestures/Training/gesture1/NoisySegmentation/tip_noisy50.png')
+frame_test = cv2.imread('../../data/In-airGestures/Training/gesture1/NoisySegmentation/tip_noisy1.png')
 img_test = frame_test[:,:,0]
 H = len(img_test)
 W = len(img_test[0])
@@ -40,23 +40,24 @@ for n in range(0, 100):
     img = frame[:,:,0]
     img_noisy = frame_noisy[:,:,0]
     img_noise = cv2.subtract(img, img_noisy)
-    cv2.imshow("A", img)
-    cv2.imshow("B", img_noisy)
-    cv2.imshow("asd", img_noise)
-    cv2.waitKey(0)
+    img_label = cv2.add(cv2.divide(img,255), cv2.divide(img_noise,255))
+    #asd = (img_label == np.ones(img_label.shape[0:2]))*255
+    #cv2.imshow("asd", cv2.multiply(asd,255))
+    #cv2.waitKey(0)
     for i in range(pad,H-pad):
         for j in range(pad,W-pad):
-            F = [img[i+w[i+j], j+w[i+j+W*H]], img[i+v[i+j], j+v[i+j+W*H]]]
-            #F = [img[i-1,j-1], img[i-1,j], img[i-1,j+1], img[i,j-1], img[i,j+1], img[i+1,j-1], img[i+1,j], img[i+1,j-1]]
+            #F = [img_noisy[i+w[i+j], j+w[i+j+W*H]], img_noisy[i+v[i+j], j+v[i+j+W*H]]]
+            img = img_noisy
+            F = [img[i-1,j-1], img[i-1,j], img[i-1,j+1], img[i,j-1], img[i,j+1], img[i+1,j-1], img[i+1,j], img[i+1,j-1]]
             X_train.append(F)
-            L_train.append(img[i,j])
+            L_train.append(img_label[i,j])
 
 X_test = []
 for i in range(pad, H - pad):
     for j in range(pad, W - pad):
-        F = [img_test[i+w[i+j], j+w[i+j+W*H]], img_test[i+v[i+j], j+v[i+j+W*H]]]
-        #img = img_test
-        #F = [img[i-1, j-1], img[i-1, j], img[i-1, j+1], img[i, j-1], img[i, j+1], img[i+1, j-1], img[i+1, j], img[i+1, j-1]]
+        #F = [img_test[i+w[i+j], j+w[i+j+W*H]], img_test[i+v[i+j], j+v[i+j+W*H]]]
+        img = img_test
+        F = [img[i-1, j-1], img[i-1, j], img[i-1, j+1], img[i, j-1], img[i, j+1], img[i+1, j-1], img[i+1, j], img[i+1, j-1]]
         X_test.append(F)
 print("Took %.2f seconds" % (time() - start))
 
@@ -66,8 +67,6 @@ start = time()
 clf = RandomForestClassifier(n_estimators=10, criterion="entropy", n_jobs=-1)
 clf = clf.fit(X_train, L_train)
 print("Took %.2f seconds" % (time() - start))
-a = clf.decision_path(X_test)
-print(clf.decision_path(X_test))
 
 print("Predicting...")
 start = time()
@@ -75,9 +74,12 @@ prediction = clf.predict(X_test)
 print("Took %.2f seconds" % (time() - start))
 
 img_out = np.reshape(prediction, (H-2*pad,W-2*pad))
+asd = (img_out == np.zeros(img_out.shape[0:2]))*1
+cv2.imshow("asd", cv2.multiply(asd,255))
 
 #cv2.imshow("Image", img)
 cv2.imshow("Image Noisy", img_test)
 cv2.imshow("Image Output", img_out)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+a=1
