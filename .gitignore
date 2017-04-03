@@ -1,3 +1,5 @@
+# Text
+*.csv
 
 # Data Images
 *.png
@@ -6,6 +8,7 @@
 # Data Videos
 *.mp4
 *.avi
+*.h264
 
 # Zip files
 *.gz
