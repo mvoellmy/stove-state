@@ -9,6 +9,7 @@ config.read('../cfg/cfg.txt')
 
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
+stove_type = config.get('misc', 'stove_type')
 
 class InputThread(threading.Thread):
     """ Thread continuously listening for keyboard inputs and so they can be used for labeling.
@@ -21,7 +22,7 @@ class InputThread(threading.Thread):
         self.list = []
 
         # Init labels file
-        self.path_label_file = path_labels + time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(self.t_start)) + rec_name + '.csv'
+        self.path_label_file = path_labels + stove_type + time.strftime("_%Y-%m-%d-%H_%M_%S_", time.gmtime(self.t_start)) + rec_name + '.csv'
         self.label_file = open(self.path_label_file, "w")
         self.label_file.write("Timestamp, PlateNr, Content, Start/End [1/0]\n")
 
@@ -69,7 +70,7 @@ while True:
             camera.resolution = (1640, 1232) # full FOV
             
             t_start = time.time()
-            file_name = time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'
+            file_name = stove_type + time.strftime("_%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'
             path_video = path_videos + file_name
 
             camera.start_recording(path_video)
