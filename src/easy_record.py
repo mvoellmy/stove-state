@@ -10,6 +10,7 @@ config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
 
+
 class InputThread(threading.Thread):
     """ Thread continuously listening for keyboard inputs and so they can be used for labeling.
     """
@@ -24,7 +25,6 @@ class InputThread(threading.Thread):
         self.path_label_file = path_labels + time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(self.t_start)) + rec_name + '.csv'
         self.label_file = open(self.path_label_file, "w")
         self.label_file.write("Timestamp, PlateNr, Content, Start/End [1/0]\n")
-
 
     def run(self):
         # Loop waiting for labels or commands to be input
@@ -48,6 +48,7 @@ class InputThread(threading.Thread):
 
         self.list = []
 
+
 # Function containing a loop which gets exited 
 def record(t_start, rec_name):
 
@@ -66,7 +67,7 @@ while True:
     rec_name = input("Enter filename or simply press enter to start recording: ")
 
     with picamera.PiCamera() as camera:
-            camera.resolution = (1640, 1232) # full FOV
+            camera.resolution = (1640, 1232)  # full FOV
             
             t_start = time.time()
             file_name = time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'

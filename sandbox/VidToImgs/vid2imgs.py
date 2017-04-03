@@ -9,16 +9,19 @@ imgs_path = '/imgs/'
 
 cap = cv2.VideoCapture(vid_path)
 
-while True:
-    print('generating imgs')
+while cap.isOpened():
     ret, frame = cap.read()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    cv2.circle(gray, (700, 200), 100, 255)
 
     cv2.imshow('frame', gray)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+
+    input()
 
     # img_name = imgs_path + 'bla.png'
     # cv2.imwrite(img_name, frame)
