@@ -10,7 +10,7 @@ video_type = '.mp4'
 stove_type = 'I'
 
 # plates_of_interest = np.array([0, 1, 0, 0])  # Ians kitchen
-plate_of_interest = 2
+plate_of_interest = 4
 
 # Read Config data
 config = configparser.ConfigParser()
@@ -97,6 +97,7 @@ for video in list_videos:
         patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3], corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
         patch_title = 'Label: ' + str(int(pan_labels[frame_id]))
         cv2.imshow(patch_title, patch)
+        # print(int(pan_labels[frame_id]))
 
         # extract features and save labels
         frame_id = frame_id + 1
