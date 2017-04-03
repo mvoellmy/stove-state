@@ -3,8 +3,8 @@ import configparser
 
 # TODO: better path setting option (all videos from folder)
 
-vid_path = 'salmon_noodles.mp4'
 vid_path = 'test.h264'
+vid_path = 'salmon_noodles.mp4'
 imgs_path = '/imgs/'
 
 cap = cv2.VideoCapture(vid_path)
@@ -19,7 +19,6 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    input('blablaue')
 
     # img_name = imgs_path + 'bla.png'
     # cv2.imwrite(img_name, frame)
