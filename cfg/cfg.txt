@@ -1,3 +1,3 @@
 [paths]
-videos = ../data/recorded/videos/
-labels = ../data/recorded/labels/
+videos = /mnt/polybox/Shared/stove-state-data/ssds/
+labels = /mnt/polybox/Shared/stove-state-data/ssds/
