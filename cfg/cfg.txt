@@ -6,5 +6,5 @@ labels = /Users/miro/Polybox/Shared/stove-state-data/ssds/labels/
 # Corner numbering is the same as the plate numbering
 # 1 2
 # 3 4
-#              x1,  y1,  x2,  y2, x3, y3,  x4,   y4
-coordinates = [150, 100, 500, 12, 12, 501, 1500, 1100]
+#              corners1            corners2               corners3             corners4
+coordinates = [220, 120, 700, 600, 1000, 200, 1530, 750, 300, 610, 824, 1050, 900, 620, 1300, 1100]
