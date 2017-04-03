@@ -18,4 +18,4 @@
 *.DS_Store
 
 # Configuration File
-/cfg.txt
+cfg.txt
