@@ -16,3 +16,5 @@
 # PyCharm
 .idea/
 *.DS_Store
+
+# Configuration File
