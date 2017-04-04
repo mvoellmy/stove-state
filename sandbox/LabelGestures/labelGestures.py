@@ -3,31 +3,33 @@ import numpy as np
 import cv2
 from os.path import join
 import time
+import scipy
+from scipy import signal
 
 config = configparser.ConfigParser()
 config.read('../../cfg/cfg.txt')
 
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
+file_name = 'I_2017-04-02-10_14_19_schnitzel'
+video_format = '.mp4'
 
-path_video = 'I_2017-04-02-10_14_19_schnitzel.mp4'
-path_video = 'schnitzel_short.mp4'
+#path_videos = ''
+#path_labels = ''
+#file_name = 'schnitzel_shorter'
 
-cap = cv2.VideoCapture(join(path_videos, path_video))
+cap = cv2.VideoCapture(join(path_videos, file_name + video_format))
 
-label_file = open("gesture_labels.txt", "w")
+label_file = open(join(path_labels, file_name + "_gesture.csv"), "w")
 time_start = time.time()
 count = 0
+labels = []
 while (cap.isOpened()):
     count += 1
     ret, frame = cap.read()
+    if frame == None:
+        break
     dim = frame.shape
-
-
-    timestamp = time.time() - time_start
-    label_file.write("{}\t ".format(count))
-    #label_file.write("{:.2f} \n".format(timestamp))
-
 
     cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
     cv2.imshow("Frame", frame)
@@ -40,6 +42,15 @@ while (cap.isOpened()):
     else:
         k = -1
     print(k)
-    label_file.write("{}\n ".format(k))
+
+    row = [count, k]
+    labels.append(row)
+
+labels = np.array(labels)
+labels[:,1] = scipy.signal.medfilt(labels[:,1],3) # Apply median filter
+
+for row in labels:
+    label_file.write(str(row[0])+" ")
+    label_file.write(str(row[1]) + "\n")
 label_file.close()
 cv2.destroyAllWindows()
