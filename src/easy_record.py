@@ -67,25 +67,26 @@ def record(t_start, rec_name):
         camera.wait_recording()
 
 
+
+print("          __          ")
+print(" ________/__\________ ")
+print("/____________________\\")
+print("|                    |")
+print("|   WELCOME TO THE   |")
+print("| COOKOMAT 3 MILLION |")
+print("|                    |")
+print("|____________________|\n")
+print("######################")
+print("Golden Recording Rules")
+print("- only pans on stove (no lids, plates, etc.)")
+print("- only short sleeved, non skin coloured shirt")
+print("- always use the same tools, pans, lids")
+print("- only cook alone")
+print("######################")
+
 # Main Loop
 while True:
-    
-    print("          __          ")
-    print(" ________/__\________ ")
-    print("/____________________\\")
-    print("|                    |")
-    print("|   WELCOME TO THE   |")
-    print("| COOKOMAT 3 MILLION |")
-    print("|                    |")
-    print("|____________________|\n")
-    print("######################")
-    print("Golden Recording Rules")
-    print("- only pans on stove (no lids, plates, etc.)")
-    print("- only short sleeved, non skin coloured shirt")
-    print("- always use the same tools, pans, lids")
-    print("- only cook alone")
-    print("######################")
-    
+      
     rec_name = input("Enter filename or simply press enter to start recording: ")
 
     with picamera.PiCamera() as camera:
