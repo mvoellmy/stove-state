@@ -1,7 +1,0 @@
-[paths]
-videos = /mnt/polybox/Shared/stove-state-data/ssds/videos/
-labels = /mnt/polybox/Shared/stove-state-data/ssds/labels/
-
-[misc]
-# M = Miro, I = Ian
-stove_type = M
