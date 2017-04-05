@@ -206,7 +206,7 @@ print()
 
 # save the model to disk
 filename_sav = time.strftime("%Y-%m-%d-%H_%M_%S") + ".sav"
-pickle.dump(clf, open('../models/' + filename_sav, 'wb'))
+pickle.dump(clf, open(filename_sav, 'wb'))
 print("Model has been saved.")
 
 print("Starting test dataset...")
