@@ -20,6 +20,8 @@ video_type = '.mp4'
 stove_type = 'M'
 # plates_of_interest = np.array([0, 1, 0, 0])  # Ians kitchen
 plate_of_interest = 2
+_single_video = True
+_plot_patches = False
 
 # Parameters
 threshold = 5
@@ -37,10 +39,15 @@ path_labels = config.get('paths', 'labels')
 has_pan = np.zeros((1, 4))
 
 # Import & parse dataset into labels and frames
+
 list_videos = []
-list_videos = [f for f in os.listdir(path_videos) if os.path.isfile(os.path.join(path_videos, f))
-                                                     and video_type in f
-                                                     and f.startswith(stove_type)]
+if _single_video:
+    list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
+    list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
+else:
+    list_videos = [f for f in os.listdir(path_videos) if os.path.isfile(os.path.join(path_videos, f))
+                                                         and video_type in f
+                                                         and f.startswith(stove_type)]
 
 patch_width = int(np.floor((corners[plate_of_interest-1, 2] - corners[plate_of_interest-1, 0])))
 patch_height = int(np.floor((corners[plate_of_interest-1, 3] - corners[plate_of_interest-1, 1])))
@@ -89,9 +96,6 @@ labels = []
 video_count = 0
 
 for video in list_videos:
-    # Single Video:
-    # path_video = path_videos + '2017-03-31-05_01_45_egg_boiled.mp4'
-
     # find corresponding labeling file
     label_file = video.replace(video_type, ".csv")
     path_label = path_labels + label_file
@@ -146,14 +150,15 @@ for video in list_videos:
         #         cv2.rectangle(frame, tuple(corners[i, 0:2]), tuple(corners[i, 2:4]), 255)
         # cv2.rectangle(frame, tuple(corners[plate_of_interest-1, 0:2]), tuple(corners[plate_of_interest-1, 2:4]), 255)
 
-        # cv2.imshow('frame', frame)
-        # cv2.waitKey(1)
-
         # split plates
         patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3], corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
-        patch_title = 'Label: ' + str(int(frame_labels[frame_id]))
-        # cv2.imshow(patch_title, patch)
-        # print(int(pan_labels[frame_id]))
+
+        if _plot_patches:
+            patch_title = 'Label: ' + str(int(frame_labels[frame_id]))
+            cv2.imshow(patch_title, patch)
+            # cv2.imshow('frame', frame)
+            cv2.waitKey(1)
+            print(int(frame_labels[frame_id]))
 
         # train_patches[frame_id-1, :, :, :] = patch
 
@@ -170,29 +175,26 @@ for video in list_videos:
 
         # extract features and save labels
         frame_id = frame_id + 1
-        print("{:.2f} %".format(frame_id/nr_of_frames*100))
+        # print("{:.2f} %".format(frame_id/nr_of_frames*100))
 
         old_patch = patch
 
     labels.append(patch_labels)
 
     print("count: {} frame_id: {}".format(count, frame_id))
-    print("Features extracted...")
+    print("{}/{} {:.2f}% features extracted...".format(len(features), nr_of_frames, count/nr_of_frames))
 
     video_count = video_count+1
-    if video_count >= 1:
-        break
 
-print(len(features))
 
 train_data, test_data, train_labels, test_labels = train_test_split(
         features, labels[0], test_size=0.2, random_state=1)
 
 # Optimize the parameters by cross-validation
 parameters = [
-    {'kernel': ['rbf'], 'gamma': [2], 'C': [100]},
-    # {'kernel': ['linear'], 'C': [1000, 500]},
-    # {'kernel': ['poly'], 'degree': [2, 3]}
+    {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+    {'kernel': ['linear'], 'C': [1000, 1]},
+    # {'kernel': ['poly'], 'degree': [2]}
 ]
 
 # Grid search object with SVM classifier.
@@ -211,6 +213,9 @@ print("Model has been saved.")
 
 print("Starting test dataset...")
 labels_predicted = clf.predict(test_data)
+for i, image in enumerate(test_data):
+    if labels_predicted[i] != test_labels[i]:
+        cv2.imshow('Predicted: {} Truth: {}'.format(labels_predicted[i], test_labels[i]),image)
 print("Test Accuracy [%0.3f]" % ((labels_predicted == test_labels).mean()))
 
 # Extract Features from images

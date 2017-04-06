@@ -7,4 +7,4 @@ labels = /Users/miro/Polybox/Shared/stove-state-data/ssds/labels/
 # 1 2
 # 3 4
 #              corners1            corners2               corners3             corners4
-coordinates = [220, 120, 700, 600, 1000, 200, 1530, 750, 300, 610, 824, 1050, 900, 620, 1300, 1100]
+coordinates = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1300, 1100]
