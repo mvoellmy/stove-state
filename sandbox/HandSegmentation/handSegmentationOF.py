@@ -1,13 +1,17 @@
 
 import numpy as np
 import cv2
+from os.path import join
 from matplotlib import pyplot as plt
 from skimage import measure
 
-cap = cv2.VideoCapture("../../data/place_noodles.mp4")
-#cap = cv2.VideoCapture("../../data/test_dark.mp4")
-#cap = cv2.VideoCapture("../../../../Polybox/Shared/stove-state-data/ssds/gestures/remove_egg.mp4")
-#cap = cv2.VideoCapture("../../data/salmon_noodles.mp4")
+video_format = '.mp4'
+
+path_videos = '../../../../Polybox/Shared/stove-state-data/ssds/test/'
+path_labels = ''
+file_name = 'place_schnitzel_1'
+
+cap = cv2.VideoCapture(join(path_videos, file_name + video_format))
 
 prevgray = []
 while (cap.isOpened()):
