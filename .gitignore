@@ -8,6 +8,7 @@
 # Data Videos
 *.mp4
 *.avi
+*.sav
 *.h264
 
 # Zip files

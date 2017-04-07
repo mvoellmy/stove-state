@@ -4,10 +4,11 @@ from clarifai.rest import Image as ClImage
 
 app = ClarifaiApp('NLrJmndR_4yDuKWgEOulLE4POX8J_PKp3O8XvcnC', 'lz5lwrp_Lo-DNEBs6FSx-or3cfFxWXoO1kgYz0L9')
 
-imgs =['http://i.imgur.com/xszf2ld.png',  # Salmon
-       'http://i.imgur.com/4ETgm9F.png',  # Stovetop with Noodles
+imgs =['http://i.imgur.com/xszf2ld.png',  # Stovetop with noodles
+       'http://i.imgur.com/4ETgm9F.png',  # Salmon
        'http://i.imgur.com/mrVz0h0.png',  # Salmon Closeup
        'http://i.imgur.com/AqiBKzm.png',  # Noodles
+       'http://i.imgur.com/erjfAaC.png',  # Boiled Egg
        'http://cdn1.medicalnewstoday.com/content/images/articles/245259-apples.jpg',  # Apple
        'http://cdn1.medicalnewstoday.com/content/images/articles/245259-broccoli.jpg',  # Brocolli
        ]
