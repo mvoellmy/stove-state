@@ -9,6 +9,8 @@ labels = /Users/miro/Polybox/Shared/stove-state-data/ssds/labels/
 # 3 4
 #         corners1             corners2            corners3             corners4
 corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1300, 1100]
+threshold = 5
 
 [I]
 corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1330, 1050]
+threshold = 15

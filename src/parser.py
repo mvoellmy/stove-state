@@ -28,9 +28,6 @@ _plot_patches = False
 _use_rgb = False
 _perc_jump = 1
 
-# Parameters
-threshold = 15
-
 # Read Config data
 config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
@@ -42,11 +39,13 @@ corners = np.reshape(ast.literal_eval(config.get(stove_type, "corners")), (-1, 4
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
 has_pan = np.zeros((1, 4))
+threshold = float(config.get(stove_type, "threshold"))
 
 # Import & parse dataset into labels and frames
 list_videos = []
 if _single_video:
     list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
+    # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
     # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
     # list_videos.append('M_2017-04-06-07_06_40_begg.mp4')
     # list_videos.append('I_2017-04-06-17_28_41_begg.mp4')
@@ -81,7 +80,7 @@ def get_HOG(img, orientations=4, pixels_per_cell=(12, 12), cells_per_block=(4, 4
         img = img[:, widthPadding:-widthPadding]
 
     # Note that we are using skimage.feature.
-    hog_features = feature.hog(img, orientations, pixels_per_cell, cells_per_block, visualise=True)
+    hog_features = feature.hog(img, orientations, pixels_per_cell, cells_per_block)
 
     return hog_features
 
@@ -148,8 +147,8 @@ for video_count, video in enumerate(list_videos):
     # for frames in video
     while frame_id < nr_of_frames:
         ret, frame = cap.read()
-        if not _use_rgb:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # if not _use_rgb:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # split plates
         patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3], corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
@@ -186,6 +185,10 @@ for video_count, video in enumerate(list_videos):
         labels = np.concatenate((labels, np.asarray(patch_labels)))
         print(type(labels))
 
+    print(len(features))
+    print(type(features))
+    print(len(labels))
+    print(type(labels))
     print("count: {} frame_id: {}".format(patch_count, frame_id))
     print("{}/{} {:.2f}% features extracted...".format(len(features), nr_of_frames, 100 * patch_count / nr_of_frames))
 
@@ -201,7 +204,7 @@ parameters = [
 ]
 
 # Grid search object with SVM classifier.
-clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=30)
+clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=4, verbose=30)
 print("GridSearch Object created")
 clf.fit(train_data, train_labels)
 
