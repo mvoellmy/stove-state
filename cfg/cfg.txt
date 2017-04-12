@@ -2,9 +2,13 @@
 videos = /Users/miro/Polybox/Shared/stove-state-data/ssds/videos/
 labels = /Users/miro/Polybox/Shared/stove-state-data/ssds/labels/
 
-[corners]
+[M]
 # Corner numbering is the same as the plate numbering
+# [columns_upper_left, rows_upper_left, columns_lower_right, rows_lower_right]
 # 1 2
 # 3 4
-#              corners1            corners2               corners3             corners4
-coordinates = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1300, 1100]
+#         corners1             corners2            corners3             corners4
+corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1300, 1100]
+
+[I]
+corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1330, 1050]

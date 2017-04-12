@@ -24,18 +24,19 @@ video_type = '.mp4'
 stove_type = 'M'
 plate_of_interest = 2
 _single_video = True
-_plot_patches = True
+_plot_patches = False
 _use_rgb = False
-_perc_jump = 5
+_perc_jump = 1
+
 # Parameters
-threshold = 5
+threshold = 15
 
 # Read Config data
 config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
 
 # Read corners and reshape them into 2d-Array
-corners = np.reshape(ast.literal_eval(config.get("corners", "coordinates")), (-1, 4))
+corners = np.reshape(ast.literal_eval(config.get(stove_type, "corners")), (-1, 4))
 
 # Read dataset
 path_videos = config.get('paths', 'videos')
@@ -45,10 +46,11 @@ has_pan = np.zeros((1, 4))
 # Import & parse dataset into labels and frames
 list_videos = []
 if _single_video:
-    # list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
+    list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
     # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
-    # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
-    list_videos.append('M_2017-04-06-07_06_40_begg.mp4')
+    # list_videos.append('M_2017-04-06-07_06_40_begg.mp4')
+    # list_videos.append('I_2017-04-06-17_28_41_begg.mp4')
+    # list_videos.append('I_2017-04-06-20_08_45_begg.mp4')
 else:
     list_videos = [f for f in os.listdir(path_videos) if os.path.isfile(os.path.join(path_videos, f))
                                                          and video_type in f
@@ -152,21 +154,24 @@ for video_count, video in enumerate(list_videos):
         # split plates
         patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3], corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
-        if _plot_patches:
-            patch_title = 'Label: ' + str(int(frame_labels[frame_id]))
-            cv2.imshow(patch_title, patch)
-            # cv2.imshow('frame', frame)
-            cv2.waitKey(1)
 
         # Check the mean squared error between two consecutive frames
         if frame_id == 1 or mse(patch, old_patch) > threshold:
             # extract features and save labels
-            # print(mse(patch, old_patch))
+            # if frame_id > 1:
+            #     print(mse(patch, old_patch))
+
             hog = get_HOG(patch)
             features.append(hog)
             patch_labels.append(frame_labels[frame_id])
             # cv2.imshow('Hog', hog)
             patch_count = patch_count + 1
+
+        if _plot_patches:
+            patch_title = 'Label: ' + str(int(frame_labels[frame_id]))
+            cv2.imshow(patch_title, patch)
+            # cv2.imshow('frame', frame)
+            cv2.waitKey(1)
 
         frame_id = frame_id + 1
         if frame_id/nr_of_frames*100 >= next_perc:
