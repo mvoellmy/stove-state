@@ -91,7 +91,7 @@ while True:
 
     with picamera.PiCamera() as camera:
             camera.resolution = (1640, 1232) # full FOV
-            camera.framerate = 30
+            camera.framerate = 25
             
             t_start = time.time()
             file_name = stove_type + time.strftime("_%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'
