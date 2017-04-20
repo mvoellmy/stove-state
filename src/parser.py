@@ -21,8 +21,7 @@ plt.ion()
 
 # Options
 video_type = '.mp4'
-stove_type = 'M'
-plate_of_interest = 2
+stove_type = 'I'
 _single_video = True
 _plot_patches = False
 _use_rgb = False
@@ -40,16 +39,17 @@ path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
 has_pan = np.zeros((1, 4))
 threshold = float(config.get(stove_type, "threshold"))
+plate_of_interest = int(config.get(stove_type, "plate_of_interest"))
 
 # Import & parse dataset into labels and frames
 list_videos = []
 if _single_video:
-    list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
+    # list_videos.append('M_2017-04-06-06_25_00_pan_labeling.mp4')
     # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
     # list_videos.append('M_2017-04-07-14_06_53_short_test.mp4')
     # list_videos.append('M_2017-04-06-07_06_40_begg.mp4')
-    # list_videos.append('I_2017-04-06-17_28_41_begg.mp4')
-    # list_videos.append('I_2017-04-06-20_08_45_begg.mp4')
+    list_videos.append('I_2017-04-06-17_28_41_begg.mp4')
+    list_videos.append('I_2017-04-06-20_08_45_begg.mp4')
 else:
     list_videos = [f for f in os.listdir(path_videos) if os.path.isfile(os.path.join(path_videos, f))
                                                          and video_type in f
@@ -62,7 +62,7 @@ print(len(list_videos))
 print(list_videos)
 
 
-def get_HOG(img, orientations=4, pixels_per_cell=(12, 12), cells_per_block=(4, 4), widthPadding=10):
+def get_HOG(img, orientations=4, pixels_per_cell=(16, 16), cells_per_block=(4, 4), widthPadding=10):
     """
     Calculates HOG feature vector for the given image.
 
@@ -97,6 +97,7 @@ def mse(imageA, imageB):
     return err
 
 features = []
+patches = []
 labels = np.array('empty')
 
 for video_count, video in enumerate(list_videos):
@@ -116,12 +117,6 @@ for video_count, video in enumerate(list_videos):
     frame_time = frame_id*frame_rate
     frame_labels = np.zeros(nr_of_frames)  # 0: no pan, 1: pan, 2: cover
     next_perc = 0
-
-    # Creat container for plate patches
-    if _use_rgb:
-        patches = np.zeros((nr_of_frames, patch_height, patch_width, 3))
-    else:
-        patches = np.zeros((nr_of_frames, patch_height, patch_width))
 
     patch_labels = []
 
@@ -161,6 +156,7 @@ for video_count, video in enumerate(list_videos):
             #     print(mse(patch, old_patch))
 
             hog = get_HOG(patch)
+            patches.append(patch)
             features.append(hog)
             patch_labels.append(frame_labels[frame_id])
             # cv2.imshow('Hog', hog)
@@ -193,8 +189,13 @@ for video_count, video in enumerate(list_videos):
     print("{}/{} {:.2f}% features extracted...".format(len(features), nr_of_frames, 100 * patch_count / nr_of_frames))
 
 
-train_data, test_data, train_labels, test_labels = train_test_split(
-        features, labels, test_size=0.3, random_state=2)
+# train_data, test_data, train_labels, test_labels = train_test_split(
+#        features, labels, test_size=0.3, random_state=2)
+
+train_data = features[0:1737]
+train_labels = labels[0:1737]
+test_data = features[1738:]
+test_labels = labels[1737:]
 
 # Optimize the parameters by cross-validation
 parameters = [
@@ -204,7 +205,7 @@ parameters = [
 ]
 
 # Grid search object with SVM classifier.
-clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=4, verbose=30)
+clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=30)
 print("GridSearch Object created")
 clf.fit(train_data, train_labels)
 
@@ -219,15 +220,14 @@ print("Model has been saved.")
 
 print("Starting test dataset...")
 labels_predicted = clf.predict(test_data)
+print("Test Accuracy [%0.3f]" % ((labels_predicted == test_labels).mean()))
+
 for i, image in enumerate(test_data):
     if labels_predicted[i] != test_labels[i]:
-        cv2.imshow('{} Predicted: {} Truth: {}'.format(i, labels_predicted[i], test_labels[i]), image)
-        cv2.waitKey(1)
-        print(image)
-        input("hello")
+        cv2.imshow('{} Predicted: {} Truth: {}'.format(i, labels_predicted[i], test_labels[i]), patches[i])
+        cv2.waitKey(0)
 
-input()
-print("Test Accuracy [%0.3f]" % ((labels_predicted == test_labels).mean()))
+input
 
 # Extract Features from images
 print("program has terminated.")
