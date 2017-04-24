@@ -2,16 +2,17 @@
 import numpy as np
 import cv2
 from scipy import ndimage
-import matplotlib.pyplot as plt
-plt.ion()
+import configparser
+from os.path import join
+import math
 
 #######################################################################################
 # Function Definitions
 
-def segment_hand(frame):
+def segmentation_RGB(frame):
     frame = frame.astype(int)
     height, width = frame.shape[:2]
-    threshold = -50
+    threshold = -70
     r_g = frame[:,:,0] - frame[:,:,1]
     r_b = frame[:,:,0] - frame[:,:,2]
     lowest = cv2.min(r_g, r_b)
@@ -21,26 +22,31 @@ def segment_hand(frame):
     return segmented.astype(np.uint8)
 
 def connected_components(segmented):
-    output = cv2.connectedComponentsWithStats(segmented)
-    num_components = output[0]
-    img = output[1]
-    idx_max = 0
-    val_max = 0
-    for i in range(1, 10):
-        val = np.sum(np.sum(img == np.ones(img.shape) * i) * 1)
-        if val > val_max:
-            val_max = val
+    ret, labels, stats, centroids = cv2.connectedComponentsWithStats(segmented)
+
+    # Loop through all components except the first one, because it is the background (biggest)
+    max_area = 0
+    idx_max = 1
+    for i in range(1,ret):
+        if stats[i][4] > max_area:
+            max_area = stats[i][4]
             idx_max = i
 
-    # img = cv2.findContours(segmented, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img = (labels == idx_max)*255
+    img = img.astype(np.uint8)
 
-    # all_labels = measure.label(segmented)
-    S = (img == np.ones(img.shape) * idx_max) * 1
-    S = cv2.multiply(S, 255)
-    S = S.astype(np.uint8)
-    return S
+    centroid = np.asarray(np.flip(centroids[idx_max],0))
 
-def PCA_direction(segmented_CC, C):
+    # Discard everything if the area is not big enough
+    threshold_area = 7000
+    validation = True
+    if max_area < threshold_area:
+        validation = False
+
+    return img, centroid, validation
+
+def PCA_direction(segmented_CC, centroid):
+    # https://alyssaq.github.io/2015/computing-the-axes-or-orientation-of-a-blob/
     y, x = np.nonzero(segmented_CC)
     x = x - np.mean(x)
     y = y - np.mean(y)
@@ -51,75 +57,95 @@ def PCA_direction(segmented_CC, C):
     evec1, evec2 = evecs[:, sort_indices]
     x_v1, y_v1 = evec1  # Eigenvector with largest eigenvalue
     x_v2, y_v2 = evec2
-    scale = 60
-    a = int(x_v1*-scale*2 + C[1])
-    c = int(x_v1*scale*2 + C[1])
-    b = int(y_v1*-scale*2 + C[0])
-    d = int(y_v1*scale*2 + C[0])
-    return a, b, c, d
+    if y_v1 > 0:        # staehlii: cheat to avoid orientation jumping around
+        y_v1 *= -1
+    scale = 100
+    x1 = int(x_v1*-scale + centroid[1])
+    x2 = int(x_v1*scale + centroid[1])
+    y1 = int(y_v1*-scale + centroid[0])
+    y2 = int(y_v1*scale + centroid[0])
+    return x1, y1, x2, y2
 
 ######################################################################################
 # Main Program
 
-cap = cv2.VideoCapture("../../data/place_noodles.mp4")
-cap = cv2.VideoCapture("../../../../Polybox/Shared/stove-state-data/ssds/gestures/place_schnitzel_1.mp4")
+config = configparser.ConfigParser()
+config.read('../../cfg/cfg.txt')
 
-gray_old = []
+path_videos = config.get('paths', 'videos')
+path_labels = config.get('paths', 'labels')
+path_gestures = '../../../../Polybox/Shared/stove-state-data/ssds/gestures/'
+video_format = '.mp4'
+# video_format = '.h264'
+
+path_labels = ''
+file_name = 'I_2017-04-06-20_08_45_begg'
+file_name = 'I_2017-04-13-21_26_55_begg'
+
+path_video = join(path_videos, file_name + video_format)
+path_gesture = join(path_gestures, 'begg', '1', file_name + '.h264')
+cap = cv2.VideoCapture(path_gesture)
+cap_video = cv2.VideoCapture(path_video)
+ret, background = cap_video.read()
+background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
+
+
+centroid_old = np.array([0,0])
+centroid_vel = np.array([0,0],dtype=np.float)
+features_file = open(join(path_labels, file_name + "_features.csv"), "w")
 while (cap.isOpened()):
     ret, frame = cap.read()
+
+    if ret == False:
+        break
+    frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
     dim = frame.shape
 
     # Color Segmentation --------------------------------------------
-    segmented = segment_hand(frame)
-
-
-    # Frame Subtraction ---------------------------------------------
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    differential = np.zeros(frame.shape[0:2])
-    if gray_old != []:
-        differential = cv2.subtract(gray,gray_old)
-    gray_old = gray
-
-    differential = (differential > 15) * 255
-    differential = differential.astype(np.uint8)
-
-    segmented_final = cv2.multiply(segmented/255, differential/255)*255
-    segmented_final = segmented_final.astype(np.uint8)
-
+    segmented = segmentation_RGB(frame)
+    background_segmented = segmentation_RGB(background)
+    segmented_sub = segmented - background_segmented
 
     # Connected Components -----------------------------------------
-    segmented_final = connected_components(segmented)
+    segmented_final, centroid, validation = connected_components(segmented)
+    if not validation:
+        segmented_final = segmented_final*0
 
+    segmented_final_color = cv2.cvtColor(segmented_final, cv2.COLOR_GRAY2RGB)
+    if validation:
+        # Compute centroid velocity ---------------------------------------------
+        centroid_vel = centroid - centroid_old
+        centroid_old = centroid
+        vel_abs = math.sqrt(centroid_vel[0]**2 + centroid_vel[1]**2)
 
-    # Compute centroid ---------------------------------------------
-    centroid = ndimage.measurements.center_of_mass(segmented_final)
-    if centroid[0] != centroid[0]:
-        centroid = (0,0)
-
-
-    # PCA for Hand Orientation -------------------------------------
-    if np.sum(np.sum(segmented_final)) > 0:
+        # Compute Hand Orientation using PCA -------------------------------------
         a, b, c, d = PCA_direction(segmented_final, centroid)
+        orientation = math.atan((b - d) / (a - c))
+
+        # Plot centroid and orientation ------------------------------------------
+        frame = cv2.circle(frame, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
+        segmented_final_color = cv2.circle(segmented_final_color, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
         frame = cv2.line(frame, (a, b), (c, d), (0, 0, 255), 10)
+        segmented_final_color = cv2.line(segmented_final_color, (a, b), (c, d), (0, 0, 255), 10)
 
-    frame = cv2.circle(frame, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
+        # Write features --------------------------------------------------------
+        print("ctr_u, ctr_v, vel_u, vel_v, orient: {} {} {}".format(centroid, centroid_vel, orientation*180/3.1415))
+        features_file.write(str(centroid[0]) + " " + str(centroid[1]) + " " + str(centroid_vel[0]) + " " + str(
+            centroid_vel[1]) + " " + str(orientation) + "\n")
 
-    # plt.figure(1)
-    # plt.imshow(frame)
-    # plt.show()
-    # plt.pause(0.0005)
+
 
     # Display Images
     cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
     cv2.imshow("Frame", frame)
     cv2.resizeWindow("Frame", int(dim[1]/2), int(dim[0]/2))
     cv2.namedWindow("Segmented", cv2.WINDOW_NORMAL)
-    cv2.imshow("Segmented", segmented_final)
+    cv2.imshow("Segmented", segmented_final_color)  #segmented_final_color
     cv2.resizeWindow("Segmented", int(dim[1] / 2), int(dim[0] / 2))
     k = cv2.waitKey(1)
     if k == 27:  # Exit by pressing escape-key
        break
 
+features_file.close()
 cv2.destroyAllWindows()
-
 #####################################################################################
