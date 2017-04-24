@@ -3,25 +3,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from pylab import *
 from fitEllipse import *
-
-
-
-# Options
-_plot_canny = False
-_plot_cnt = False
-_plot_ellipse = True
-
-# Read Images
-img_path = '../../data/stills/stove_left_on.PNG'
-img_path = '../../data/stills/stove_left_on.PNG'
-img_path = '../../data/stills/stove_top.PNG'
-img_path = '../../data/stills/hot_butter_in_pan.PNG'
-img_path = '../../data/stills/frame-000055.jpg'
-img_path = '../../data/stills/boiling_water.PNG'
-
-img = cv2.imread(img_path)
 
 
 def histogram_equalization(img):
@@ -43,71 +25,82 @@ def histogram_equalization(img):
     return cdf[img]
 
 
-img = histogram_equalization(img)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def panfind(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
 
-canny = cv2.Canny(img, 100, 200)
+    if histeq:
+        img = histogram_equalization(img)
+    if rgb:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-if _plot_canny:
-    plt.subplot(211), plt.imshow(img, cmap='gray')
-    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(212), plt.imshow(canny, cmap='gray')
-    plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-    plt.show()
+    canny = cv2.Canny(img, 100, 200)
 
-
-# Find contours
-im2, contours, hierarchy = cv2.findContours(canny.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-contours = sorted(contours, key=lambda x: cv2.arcLength(x, True), reverse=True)[:20]
-
-edges = []
-
-if _plot_ellipse:
-    plt.subplot(211), plt.imshow(canny, cmap='gray')
-    plt.title('Original Canny'), plt.xticks([]), plt.yticks([])
-    plt.subplot(212), plt.imshow(canny, cmap='gray')
-    plt.title('Elipses'), plt.xticks([]), plt.yticks([])
-    plt.imshow(canny, cmap='gray', zorder=1)
-
-for cnt in contours:
-    mask = np.zeros(canny.shape, np.uint8)
-    cv2.drawContours(mask, [cnt], 0, 255, -1)
-
-    edge = mask * canny
-    edges.append(edge)
-
-    if _plot_cnt:
-        plt.subplot(211), plt.imshow(mask, cmap='gray')
-        plt.title('Mask'), plt.xticks([]), plt.yticks([])
-        plt.subplot(212), plt.imshow(edge, cmap='gray')
-        plt.title('Contour'), plt.xticks([]), plt.yticks([])
+    if _plot_canny:
+        plt.subplot(211), plt.imshow(img, cmap='gray')
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(212), plt.imshow(canny, cmap='gray')
+        plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
         plt.show()
 
-    print("fitting ellipse")
 
-    pixelpoints = np.transpose(np.nonzero(mask))
-    x = pixelpoints[:, 0]
-    y = pixelpoints[:, 1]
+    # Find contours
+    im2, contours, hierarchy = cv2.findContours(canny.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-    a = fitEllipse(x, y)
-    center = ellipse_center(a)
-    # phi = ellipse_angle_of_rotation(a)
-    phi = ellipse_angle_of_rotation2(a)
-    axes = ellipse_axis_length(a)
+    contours = sorted(contours, key=lambda x: cv2.arcLength(x, True), reverse=True)[:10]
 
-    print("center = ", center)
-    print("angle of rotation = ", phi)
-    print("axes = ", axes)
-
-    arc_ = 2
-    R_ = np.arange(0, arc_ * np.pi, 0.01)
-    a, b = axes
-    xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
-    yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
+    edges = []
 
     if _plot_ellipse:
-        plt.scatter(y, x,s=.5, zorder=2)
-        plt.scatter(yy, xx, color='red', s=0.5, zorder=3)
+        plt.subplot(211), plt.imshow(canny, cmap='gray')
+        plt.title('Original Canny'), plt.xticks([]), plt.yticks([])
+        plt.subplot(212), plt.imshow(canny, cmap='gray')
+        plt.title('Elipses'), plt.xticks([]), plt.yticks([])
+        plt.imshow(canny, cmap='gray', zorder=1)
 
-plt.show()
+    max_axes = 0
+
+    for cnt in contours:
+        mask = np.zeros(canny.shape, np.uint8)
+        cv2.drawContours(mask, [cnt], 0, 255, -1)
+
+        edge = mask * canny
+        edges.append(edge)
+
+        if _plot_cnt:
+            plt.subplot(211), plt.imshow(mask, cmap='gray')
+            plt.title('Mask'), plt.xticks([]), plt.yticks([])
+            plt.subplot(212), plt.imshow(edge, cmap='gray')
+            plt.title('Contour'), plt.xticks([]), plt.yticks([])
+            plt.show()
+
+        pixelpoints = np.transpose(np.nonzero(mask))
+        x = pixelpoints[:, 0]
+        y = pixelpoints[:, 1]
+
+        a = fitEllipse(x, y)
+        center = ellipse_center(a)
+        # phi = ellipse_angle_of_rotation(a)
+        phi = ellipse_angle_of_rotation2(a)
+        axes = ellipse_axis_length(a)
+
+        if max_axes < axes[0] + axes[1]:
+            max_axes = axes[0] + axes[1]
+
+            if phi > 3.1415/2:
+                phi = phi - 3.1415/2
+
+            arc_ = 2
+            R_ = np.arange(0, arc_ * np.pi, 0.01)
+            a, b = axes
+            xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
+            yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
+            x_max = x
+            y_max = y
+            phi_max = phi
+
+        if _plot_ellipse:
+            plt.scatter(y, x,color='green',s=1, zorder=3)
+            plt.scatter(yy, xx, color='red', s=1, zorder=2)
+            print('Phi ={}'.format(phi_max*180/3.1415))
+    plt.show()
+
+    return center, a, phi, axes

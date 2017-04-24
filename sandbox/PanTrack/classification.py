@@ -18,6 +18,9 @@ from scipy.stats import randint as sp_randint
 
 import matplotlib.pyplot as plt
 
+# Own Libraries
+from panfind import panfind
+
 # Options
 img_type = '.jpg'
 stove_type = 'M'
@@ -25,6 +28,8 @@ _plot_patches = False
 _use_rgb = False
 _perc_jump = 25
 _plot_fails = True
+_fit_ellipse = True
+
 
 def mse(imageA, imageB):
     # the 'Mean Squared Error' between the two images is the
@@ -96,6 +101,8 @@ for label_nr, label_name in enumerate(class_list):
                 patches.append(patch)
             data.append(hog)
             labels.append(label_nr)
+            if _fit_ellipse:
+                panfind(patch, _plot_ellipse=True)
 
         if _plot_patches:
             patch_title = 'Label: ' + label_name
