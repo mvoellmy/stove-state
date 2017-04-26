@@ -20,82 +20,53 @@ import matplotlib.pyplot as plt
 
 # Own Libraries
 from locate_pan import locate_pan
+from helpers import mse, get_HOG
+
+# Hog Params
+_params = {'orientations': 4,
+           'pixels_per_cell': (16, 16),
+           'cells_per_block': (4, 4),
+           'widthPadding': 10}
 
 # Options
+_params['stove_type'] = 'I'
 img_type = '.jpg'
-stove_type = 'I_test'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_path = '../features/'
-features_name = 'test'
+models_path = '../models/'
+features_name = '2017-04-26-20_27_03'
 
-_plot_patches = False
-_use_rgb = False
-_perc_jump = 0.01
-_plot_fails = True
-_fit_ellipse = False
 _load_features = True
-_hog_params = {'orientations': 4,
-               'pixels_per_cell': (16, 16),
-               'cells_per_block': (4, 4),
-               'widthPadding': 10}
+_perc_jump = 10
+_max_label_features = 5000
 
-
-def mse(imageA, imageB):
-    # the 'Mean Squared Error' between the two images is the
-    # sum of the squared difference between the two images;
-    # NOTE: the two images must have the same dimension
-    err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
-    err /= float(imageA.shape[0] * imageA.shape[1])
-
-    # return the MSE, the lower the error, the more "similar"
-    # the two images are
-    return err
-
-
-def get_HOG(img, orientations=4, pixels_per_cell=(16, 16), cells_per_block=(4, 4), widthPadding=10):
-    """
-    Calculates HOG feature vector for the given image.
-
-    img is a numpy array of 2- or 3-dimensional image (i.e., grayscale or rgb).
-    Color-images are first transformed to grayscale since HOG requires grayscale
-    images.
-
-    Reference: http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog
-    """
-    if len(img.shape) > 2:
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
-    # Crop the image from left and right.
-    if widthPadding > 0:
-        img = img[:, widthPadding:-widthPadding]
-
-    # Note that we are using skimage.feature.
-    hog_features = feature.hog(img, orientations, pixels_per_cell, cells_per_block)
-
-    return hog_features
-
+_use_rgb = False
+_locate_pan = False
+_plot_fails = True
+_plot_patches = False
 
 # Read Config data
 config = configparser.ConfigParser()
 config.read(cfg_path)
 
 # Read corners and reshape them into 2d-Array
-corners = np.reshape(ast.literal_eval(config.get(stove_type, "corners")), (-1, 4))
+corners = np.reshape(ast.literal_eval(config.get(_params['stove_type'], "corners")), (-1, 4))
 
-# Read dataset
-path_data = config.get('paths', 'data')
-path_data = path_data + stove_type + '/'
-has_pan = np.zeros((1, 4))
-threshold = float(config.get(stove_type, "threshold"))
-plate_of_interest = int(config.get(stove_type, "plate_of_interest"))
+path_data = config.get('paths', 'data') + _params['stove_type'] + '/'
+threshold = float(config.get(_params['stove_type'], "threshold"))
+plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
+
+# get classes
 class_list = [f for f in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, f))]
+
+# initialize variables
 labels = []
 data = []
 patches = []
 next_perc = 0
 
 
-# Build dataset
+# Build or load Features
 if _load_features:
     print('---------------------------')
     print('Features name: {}'.format(features_name))
@@ -110,26 +81,38 @@ if _load_features:
         print('     {}: {}'.format(key, val))
 else:
     for label_nr, label_name in enumerate(class_list):
-        img_list = [f for f in os.listdir(path_data+label_name) if os.path.isfile(os.path.join(path_data+label_name, f)) and img_type in f]
+
+        nr_of_label_features = 0
+
+        img_list = [f for f in os.listdir(path_data+label_name) if os.path.isfile(os.path.join(path_data+label_name, f))
+                                                                   and img_type in f]
         print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
         for it, img in enumerate(img_list):
+            if nr_of_label_features >= _max_label_features:
+                print("Max number of features for class {} has been reached".format(label_name))
+                break
+
             frame = cv2.imread(path_data+label_name+'/'+img, 0)
             patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
                           corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
             # Check the mean squared error between two consecutive frames
             if it == 0 or mse(patch, old_patch) > threshold:
-                hog = get_HOG(patch)
-                hog = get_HOG(patch, orientations=_hog_params['orientations'],
-                                     pixels_per_cell=_hog_params['pixels_per_cell'],
-                                     cells_per_block=_hog_params['cells_per_block'],
-                                     widthPadding=_hog_params['widthPadding'])
-                if _plot_fails:
-                    patches.append(patch)
+                hog = get_HOG(patch, orientations=_params['orientations'],
+                              pixels_per_cell=_params['pixels_per_cell'],
+                              cells_per_block=_params['cells_per_block'],
+                              widthPadding=_params['widthPadding'])
+
                 data.append(hog)
                 labels.append(label_nr)
-                if _fit_ellipse:
+
+                nr_of_label_features += 1
+
+                if _locate_pan:
                     locate_pan(patch, _plot_ellipse=True)
+
+                if _plot_fails:
+                    patches.append(patch)
 
             if _plot_patches:
                 patch_title = 'Label: ' + label_name
@@ -146,25 +129,23 @@ else:
         print('{} features extracted'.format(len(data)))
         next_perc = 0
 
+    _params['labels'] = class_list
+    _params['nr_features'] = len(data)
+
     # Save features
-    time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
-    features_name = features_path + 'F_' + time_name + '.npy'
-    labels_name = features_path + 'L_' + time_name + '.npy'
-    info_name = features_path + 'I_' + time_name + '.csv'
+    f_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
+    features_name = features_path + 'F_' + f_time_name + '.npy'
+    labels_name = features_path + 'L_' + f_time_name + '.npy'
+    info_name = features_path + 'I_' + f_time_name + '.csv'
 
     np.save(features_name, data)
     np.save(labels_name, labels)
     # save I in csv file
     with open(info_name, 'w') as csvfile:
         writer = csv.writer(csvfile)
-        for key, val in _hog_params.items():
+        for key, val in _params.items():
             writer.writerow([key, val])
 
-        writer.writerow(['nr_features', len(data)])
-        writer.writerow(['stove_type', stove_type])
-        writer.writerow(['labels', class_list])
-
-    print(labels)
     print('Feature extraction finished!')
 
 print('---------------------------')
@@ -177,24 +158,34 @@ parameters = [
     # {'kernel': ['poly'], 'degree': [2]}
 ]
 
-
 # Grid search object with SVM classifier.
-clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=0)
+clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=1)
 print("GridSearch Object created")
 print("Starting training")
 clf.fit(train_data, train_labels)
 
 print("Best parameters set found on training set:")
 print(clf.best_params_)
-#
-# # save the model to disk
-# filename_sav = time.strftime("%Y-%m-%d-%H_%M_%S.sav")
-# pickle.dump(clf, open(filename_sav, 'wb'))
-# print("Model has been saved.")
 
 print("Starting test dataset...")
 labels_predicted = clf.predict(test_data)
-print("Test Accuracy [%0.3f]" % ((labels_predicted == test_labels).mean()))
+_params['model_accuracy'] = (labels_predicted == test_labels).mean()
+print("Test Accuracy [%0.3f]" % (_params['model_accuracy']))
+
+# save the model to disk
+m_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
+model_name = models_path + 'M_' + m_time_name + '.sav'
+info_name = models_path + 'I_' + m_time_name + '.csv'
+
+pickle.dump(clf, open(model_name, 'wb'))
+with open(info_name, 'w') as csvfile:
+    writer = csv.writer(csvfile)
+    for key, val in _params.items():
+        writer.writerow([key, val])
+
+
+print("Model has been saved.")
+
 
 if _plot_fails:
     for i, image in enumerate(test_data):

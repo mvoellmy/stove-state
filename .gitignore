@@ -1,5 +1,4 @@
 # Text
-*.csv
 
 # Data Images
 *.png
@@ -8,7 +7,6 @@
 # Data Videos
 *.mp4
 *.avi
-*.sav
 *.h264
 
 # Zip files
@@ -18,3 +16,7 @@
 .idea/
 *.DS_Store
 *.pyc
+sandbox/PanTrack/__pycache__/
+sandbox/PanTrack/models/
+sandbox/PanTrack/src/__pycache__/
+sandbox/pokedex-find-screen-part-1/pyimagesearch/__pycache__/
