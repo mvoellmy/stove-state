@@ -11,7 +11,7 @@ config.read('../../cfg/cfg.txt')
 
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
-file_name = 'I_2017-04-02-10_14_19_schnitzel'
+file_name = 'I_20170419_232724_begg'
 video_format = '.mp4'
 
 #path_videos = ''
