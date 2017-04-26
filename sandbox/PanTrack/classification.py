@@ -23,7 +23,7 @@ from panfind import panfind
 
 # Options
 img_type = '.jpg'
-stove_type = 'M'
+stove_type = 'I'
 _plot_patches = False
 _use_rgb = False
 _perc_jump = 25

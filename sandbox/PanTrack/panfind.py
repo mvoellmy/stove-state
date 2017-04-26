@@ -54,7 +54,7 @@ def panfind(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _p
         plt.title('Original Canny'), plt.xticks([]), plt.yticks([])
         plt.subplot(212), plt.imshow(canny, cmap='gray')
         plt.title('Elipses'), plt.xticks([]), plt.yticks([])
-        plt.imshow(canny, cmap='gray', zorder=1)
+        plt.imshow(img, cmap='gray', zorder=1)
 
     max_axes = 0
 
@@ -97,10 +97,10 @@ def panfind(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _p
             y_max = y
             phi_max = phi
 
-        if _plot_ellipse:
-            plt.scatter(y, x,color='green',s=1, zorder=3)
-            plt.scatter(yy, xx, color='red', s=1, zorder=2)
-            print('Phi ={}'.format(phi_max*180/3.1415))
+    if _plot_ellipse:
+        # plt.scatter(y, x,color='green', s=1, zorder=2)
+        plt.scatter(yy, xx, color='red', s=1, zorder=3)
+        print('Phi ={}'.format(phi_max*180/3.1415))
     plt.show()
 
     return center, a, phi, axes
