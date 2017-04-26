@@ -7,7 +7,7 @@ Created on Tue Mar 14 10:55:25 2017
 
 # Python 2/3 compatibility
 from __future__ import print_function
-
+from os.path import join
 import numpy as np
 import cv2
 #import video
@@ -55,9 +55,18 @@ if __name__ == '__main__':
     except IndexError:
         fn = 0
 
-    #cam = video.create_capture(fn)
-    #ret, prev = cam.read()
+
     cap = cv2.VideoCapture('../../data/place_noodles.mp4')
+
+    video_format = '.mp4'
+
+    path_videos = '../../../../Polybox/Shared/stove-state-data/ssds/test/'
+    path_labels = ''
+    file_name = 'place_schnitzel_1'
+
+    cap = cv2.VideoCapture(join(path_videos, file_name + video_format))
+
+
     ret, prev = cap.read()
     prevgray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
     show_hsv = False
@@ -67,11 +76,15 @@ if __name__ == '__main__':
     while True:
         #ret, img = cam.read()
         ret, img = cap.read()
+        dim = img.shape
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 1, 100, 3, 2, 0.5, 0)
+        # flow = cv2.calcOpticalFlowFarneback(prevgray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
         prevgray = gray
 
+        cv2.namedWindow("flow", cv2.WINDOW_NORMAL)
         cv2.imshow('flow', draw_flow(gray, flow))
+        cv2.resizeWindow("flow", int(dim[1] / 2), int(dim[0] / 2))
         if show_hsv:
             cv2.imshow('flow HSV', draw_hsv(flow))
         if show_glitch:
