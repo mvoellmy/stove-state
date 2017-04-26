@@ -23,12 +23,21 @@ from locate_pan import locate_pan
 
 # Options
 img_type = '.jpg'
-stove_type = 'I'
+stove_type = 'I_test'
+cfg_path = '../../../cfg/class_cfg.txt'
+features_path = '../features/'
+features_name = 'test'
+
 _plot_patches = False
 _use_rgb = False
-_perc_jump = 25
+_perc_jump = 0.01
 _plot_fails = True
 _fit_ellipse = False
+_load_features = True
+_hog_params = {'orientations': 4,
+               'pixels_per_cell': (16, 16),
+               'cells_per_block': (4, 4),
+               'widthPadding': 10}
 
 
 def mse(imageA, imageB):
@@ -68,7 +77,7 @@ def get_HOG(img, orientations=4, pixels_per_cell=(16, 16), cells_per_block=(4, 4
 
 # Read Config data
 config = configparser.ConfigParser()
-config.read('../../cfg/class_cfg.txt')
+config.read(cfg_path)
 
 # Read corners and reshape them into 2d-Array
 corners = np.reshape(ast.literal_eval(config.get(stove_type, "corners")), (-1, 4))
@@ -87,42 +96,80 @@ next_perc = 0
 
 
 # Build dataset
-for label_nr, label_name in enumerate(class_list):
-    img_list = [f for f in os.listdir(path_data+label_name) if os.path.isfile(os.path.join(path_data+label_name, f)) and img_type in f]
-    print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
-    for it, img in enumerate(img_list):
-        frame = cv2.imread(path_data+label_name+'/'+img, 0)
-        patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
-                      corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
+if _load_features:
+    print('---------------------------')
+    print('Features name: {}'.format(features_name))
+    data = np.load(features_path + 'F_' + features_name + '.npy')
+    labels = np.load(features_path + 'L_' + features_name + '.npy')
 
-        # Check the mean squared error between two consecutive frames
-        if it == 0 or mse(patch, old_patch) > threshold:
-            hog = get_HOG(patch)
-            if _plot_fails:
-                patches.append(patch)
-            data.append(hog)
-            labels.append(label_nr)
-            if _fit_ellipse:
-                panfind(patch, _plot_ellipse=True)
+    # load info file
+    _params = {}
+    print('Parameters: ')
+    for key, val in csv.reader(open(features_path + 'I_' + features_name + '.csv')):
+        _params[key] = val
+        print('     {}: {}'.format(key, val))
+else:
+    for label_nr, label_name in enumerate(class_list):
+        img_list = [f for f in os.listdir(path_data+label_name) if os.path.isfile(os.path.join(path_data+label_name, f)) and img_type in f]
+        print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
+        for it, img in enumerate(img_list):
+            frame = cv2.imread(path_data+label_name+'/'+img, 0)
+            patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
+                          corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
-        if _plot_patches:
-            patch_title = 'Label: ' + label_name
-            cv2.imshow(patch_title, patch)
-            # cv2.imshow('frame', frame)
-            cv2.waitKey(1)
+            # Check the mean squared error between two consecutive frames
+            if it == 0 or mse(patch, old_patch) > threshold:
+                hog = get_HOG(patch)
+                hog = get_HOG(patch, orientations=_hog_params['orientations'],
+                                     pixels_per_cell=_hog_params['pixels_per_cell'],
+                                     cells_per_block=_hog_params['cells_per_block'],
+                                     widthPadding=_hog_params['widthPadding'])
+                if _plot_fails:
+                    patches.append(patch)
+                data.append(hog)
+                labels.append(label_nr)
+                if _fit_ellipse:
+                    locate_pan(patch, _plot_ellipse=True)
 
-        if it/len(img_list)*100 >= next_perc:
-            print("{:.2f} %".format(it/len(img_list)*100))
-            next_perc = next_perc + _perc_jump
+            if _plot_patches:
+                patch_title = 'Label: ' + label_name
+                cv2.imshow(patch_title, patch)
+                # cv2.imshow('frame', frame)
+                cv2.waitKey(1)
 
-        old_patch = patch
+            if it/len(img_list)*100 >= next_perc:
+                print("{:.2f} %".format(it/len(img_list)*100))
+                next_perc = next_perc + _perc_jump
 
-    print('{} features extracted'.format(len(data)))
-    next_perc = 0
+            old_patch = patch
 
-print('feature extraction finished!')
+        print('{} features extracted'.format(len(data)))
+        next_perc = 0
 
-train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=0.7, random_state=2)
+    # Save features
+    time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
+    features_name = features_path + 'F_' + time_name + '.npy'
+    labels_name = features_path + 'L_' + time_name + '.npy'
+    info_name = features_path + 'I_' + time_name + '.csv'
+
+    np.save(features_name, data)
+    np.save(labels_name, labels)
+    # save I in csv file
+    with open(info_name, 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        for key, val in _hog_params.items():
+            writer.writerow([key, val])
+
+        writer.writerow(['nr_features', len(data)])
+        writer.writerow(['stove_type', stove_type])
+        writer.writerow(['labels', class_list])
+
+    print(labels)
+    print('Feature extraction finished!')
+
+print('---------------------------')
+
+train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=0.2, random_state=2)
 # Optimize the parameters by cross-validation
 parameters = [
     # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
@@ -132,7 +179,7 @@ parameters = [
 
 
 # Grid search object with SVM classifier.
-clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=30)
+clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=0)
 print("GridSearch Object created")
 print("Starting training")
 clf.fit(train_data, train_labels)
@@ -141,7 +188,7 @@ print("Best parameters set found on training set:")
 print(clf.best_params_)
 #
 # # save the model to disk
-# filename_sav = time.strftime("%Y-%m-%d-%H_%M_%S") + ".sav"
+# filename_sav = time.strftime("%Y-%m-%d-%H_%M_%S.sav")
 # pickle.dump(clf, open(filename_sav, 'wb'))
 # print("Model has been saved.")
 

@@ -11,6 +11,11 @@ corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620
 threshold = 15
 plate_of_interest = 4
 
+[I_test]
+corners = [220, 120, 700, 600, 950, 20, 1530, 560, 300, 610, 824, 1050, 900, 620, 1330, 1050]
+threshold = 0
+plate_of_interest = 4
+
 # Corner numbering is the same as the plate numbering
 # [columns_upper_left, rows_upper_left, columns_lower_right, rows_lower_right]
 # 1 2
