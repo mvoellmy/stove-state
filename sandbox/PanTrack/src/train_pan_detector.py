@@ -19,7 +19,7 @@ from scipy.stats import randint as sp_randint
 import matplotlib.pyplot as plt
 
 # Own Libraries
-from panfind import panfind
+from locate_pan import locate_pan
 
 # Options
 img_type = '.jpg'
@@ -28,7 +28,7 @@ _plot_patches = False
 _use_rgb = False
 _perc_jump = 25
 _plot_fails = True
-_fit_ellipse = True
+_fit_ellipse = False
 
 
 def mse(imageA, imageB):
@@ -68,7 +68,7 @@ def get_HOG(img, orientations=4, pixels_per_cell=(16, 16), cells_per_block=(4, 4
 
 # Read Config data
 config = configparser.ConfigParser()
-config.read('../cfg/class_cfg.txt')
+config.read('../../cfg/class_cfg.txt')
 
 # Read corners and reshape them into 2d-Array
 corners = np.reshape(ast.literal_eval(config.get(stove_type, "corners")), (-1, 4))
@@ -92,7 +92,8 @@ for label_nr, label_name in enumerate(class_list):
     print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
     for it, img in enumerate(img_list):
         frame = cv2.imread(path_data+label_name+'/'+img, 0)
-        patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3], corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
+        patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
+                      corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
         # Check the mean squared error between two consecutive frames
         if it == 0 or mse(patch, old_patch) > threshold:

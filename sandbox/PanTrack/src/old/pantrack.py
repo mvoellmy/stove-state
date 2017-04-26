@@ -6,11 +6,11 @@ from matplotlib import pyplot as plt
 from fitEllipse import *
 from pylab import *
 
-img_path = '../../data/stills/stove_left_on.PNG'
-img_path = '../../data/stills/boiling_water.PNG'
-img_path = '../../data/stills/stove_left_on.PNG'
-img_path = '../../data/stills/hot_butter_in_pan.PNG'
-img_path = '../../data/stills/stove_top.PNG'
+img_path = '/home/miro/polybox/Shared/stove-state-data/ssds/stills/stove_left_on.PNG'
+img_path = '/home/miro/polybox/Shared/stove-state-data/ssds/stills/boiling_water.PNG'
+img_path = '/home/miro/polybox/Shared/stove-state-data/ssds/stills/stove_left_on.PNG'
+img_path = '/home/miro/polybox/Shared/stove-state-data/ssds/stills/hot_butter_in_pan.PNG'
+img_path = '/home/miro/polybox/Shared/stove-state-data/ssds/stills/stove_top.PNG'
 img = cv2.imread(img_path)
 
 _use_sift = False

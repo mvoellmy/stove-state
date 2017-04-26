@@ -1,4 +1,3 @@
-# Find Elipses
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -25,7 +24,7 @@ def histogram_equalization(img):
     return cdf[img]
 
 
-def panfind(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
+def locate_pan(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
 
     if histeq:
         img = histogram_equalization(img)
@@ -100,7 +99,7 @@ def panfind(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _p
     if _plot_ellipse:
         # plt.scatter(y, x,color='green', s=1, zorder=2)
         plt.scatter(yy, xx, color='red', s=1, zorder=3)
-        print('Phi ={}'.format(phi_max*180/3.1415))
+        # print('Phi ={}'.format(phi_max*180/3.1415))
     plt.show()
 
     return center, a, phi, axes

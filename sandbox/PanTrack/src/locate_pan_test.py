@@ -1,5 +1,5 @@
 import cv2
-from panfind import panfind
+from locate_pan import locate_pan
 
 # Read Images
 img_path = '../../data/stills/stove_left_on.PNG'
@@ -11,4 +11,4 @@ img_path = '../../data/stills/hot_butter_in_pan.PNG'
 
 img = cv2.imread(img_path)
 
-panfind(img,rgb=True, _plot_ellipse=True)
+locate_pan(img,rgb=True, _plot_ellipse=True)
