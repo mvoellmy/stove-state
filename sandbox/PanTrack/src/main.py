@@ -17,8 +17,8 @@ cfg_path = '../../../cfg/class_cfg.txt'
 features_path = '../features/'
 models_path = '../models/'
 
-video_path = 'test.mp4'
-model_name = 'test'
+video_path = 'I_2017-04-06-20_08_45_begg.mp4'
+model_name = '2017-04-27-15_19_51'
 
 
 # Load pan detect model
@@ -54,6 +54,7 @@ nr_of_frames = int(cap.get(7))
 while frame_id < nr_of_frames:
     ret, frame = cap.read()
 
+    # Todo: put preprocessing function here:
     patch = frame[corners[plate_of_interest - 1, 1]:corners[plate_of_interest - 1, 3],
             corners[plate_of_interest - 1, 0]:corners[plate_of_interest - 1, 2]]
 
@@ -65,10 +66,16 @@ while frame_id < nr_of_frames:
     hog = get_HOG(patch)
 
     label_predicted = pan_model.predict(hog)
-    cv2.imshow('predicted', patch)
-    print(label_predicted)
-    cv2.waitKey(1)
 
+    if label_predicted == 0:
+        center, axes, phi, xx, yy = locate_pan(patch, _plot_ellipse=0)
+        center = center[::-1]
+        axes = axes[::-1]
+        cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)), int(-phi*180/3.1415), 0, 360, (0, 0, 255), thickness=5)
+
+    cv2.putText(patch, str(label_predicted), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
+    cv2.imshow('predicted', patch)
+    cv2.waitKey(1)
 
 # check if pan is detected -> fit patch to model
 #   if detected:

@@ -24,7 +24,7 @@ def histogram_equalization(img):
     return cdf[img]
 
 
-def locate_pan(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
+def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
 
     if histeq:
         img = histogram_equalization(img)
@@ -95,6 +95,8 @@ def locate_pan(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False,
             x_max = x
             y_max = y
             phi_max = phi
+            axes_max = axes
+            center_max = center
 
     if _plot_ellipse:
         # plt.scatter(y, x,color='green', s=1, zorder=2)
@@ -102,4 +104,4 @@ def locate_pan(img, rgb=False, histeq=False, _plot_canny=False, _plot_cnt=False,
         # print('Phi ={}'.format(phi_max*180/3.1415))
     plt.show()
 
-    return center, a, phi, axes
+    return center_max,axes_max, phi_max, xx, yy

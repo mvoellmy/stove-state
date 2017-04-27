@@ -7,6 +7,7 @@ import os.path
 import time
 import pickle
 
+from random import shuffle
 
 from skimage import feature
 from sklearn.model_selection import train_test_split
@@ -20,7 +21,7 @@ import matplotlib.pyplot as plt
 
 # Own Libraries
 from locate_pan import locate_pan
-from helpers import mse, get_HOG
+from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
 _params = {'orientations': 4,
@@ -34,11 +35,12 @@ img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_path = '../features/'
 models_path = '../models/'
-features_name = '2017-04-26-20_27_03'
+features_name = '2017-04-27-15_17_27'
 
 _load_features = True
+_train_model = True
 _perc_jump = 10
-_max_label_features = 5000
+_max_label_features = 2000
 
 _use_rgb = False
 _locate_pan = False
@@ -87,6 +89,8 @@ else:
         img_list = [f for f in os.listdir(path_data+label_name) if os.path.isfile(os.path.join(path_data+label_name, f))
                                                                    and img_type in f]
         print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
+
+        shuffle(img_list)
         for it, img in enumerate(img_list):
             if nr_of_label_features >= _max_label_features:
                 print("Max number of features for class {} has been reached".format(label_name))
@@ -98,7 +102,10 @@ else:
 
             # Check the mean squared error between two consecutive frames
             if it == 0 or mse(patch, old_patch) > threshold:
-                hog = get_HOG(patch, orientations=_params['orientations'],
+
+                patch_normalized = histogram_equalization(patch)
+                hog = get_HOG(patch_normalized,
+                              orientations=_params['orientations'],
                               pixels_per_cell=_params['pixels_per_cell'],
                               cells_per_block=_params['cells_per_block'],
                               widthPadding=_params['widthPadding'])
@@ -150,45 +157,46 @@ else:
 
 print('---------------------------')
 
-train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=0.2, random_state=2)
-# Optimize the parameters by cross-validation
-parameters = [
-    # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-    {'kernel': ['linear'], 'C': [1000]},
-    # {'kernel': ['poly'], 'degree': [2]}
-]
+if _train_model:
+    train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=0.2, random_state=2)
+    # Optimize the parameters by cross-validation
+    parameters = [
+        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        {'kernel': ['linear'], 'C': [1000]},
+        # {'kernel': ['poly'], 'degree': [2]}
+    ]
 
-# Grid search object with SVM classifier.
-clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=1)
-print("GridSearch Object created")
-print("Starting training")
-clf.fit(train_data, train_labels)
+    # Grid search object with SVM classifier.
+    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=1)
+    print("GridSearch Object created")
+    print("Starting training")
+    clf.fit(train_data, train_labels)
 
-print("Best parameters set found on training set:")
-print(clf.best_params_)
+    print("Best parameters set found on training set:")
+    print(clf.best_params_)
 
-print("Starting test dataset...")
-labels_predicted = clf.predict(test_data)
-_params['model_accuracy'] = (labels_predicted == test_labels).mean()
-print("Test Accuracy [%0.3f]" % (_params['model_accuracy']))
+    print("Starting test dataset...")
+    labels_predicted = clf.predict(test_data)
+    _params['model_accuracy'] = (labels_predicted == test_labels).mean()
+    print("Test Accuracy [%0.3f]" % (_params['model_accuracy']))
 
-# save the model to disk
-m_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
-model_name = models_path + 'M_' + m_time_name + '.sav'
-info_name = models_path + 'I_' + m_time_name + '.csv'
+    # save the model to disk
+    m_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
+    model_name = models_path + 'M_' + m_time_name + '.sav'
+    info_name = models_path + 'I_' + m_time_name + '.csv'
 
-pickle.dump(clf, open(model_name, 'wb'))
-with open(info_name, 'w') as csvfile:
-    writer = csv.writer(csvfile)
-    for key, val in _params.items():
-        writer.writerow([key, val])
-
-
-print("Model has been saved.")
+    pickle.dump(clf, open(model_name, 'wb'))
+    with open(info_name, 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        for key, val in _params.items():
+            writer.writerow([key, val])
 
 
-if _plot_fails:
-    for i, image in enumerate(test_data):
-       if labels_predicted[i] != test_labels[i]:
-           cv2.imshow('{} Predicted: {} Truth: {}'.format(i, labels_predicted[i], test_labels[i]), patches[i])
-           cv2.waitKey(0)
+    print("Model has been saved.")
+
+
+    if _plot_fails:
+        for i, image in enumerate(test_data):
+           if labels_predicted[i] != test_labels[i]:
+               cv2.imshow('{} Predicted: {} Truth: {}'.format(i, labels_predicted[i], test_labels[i]), patches[i])
+               cv2.waitKey(0)
