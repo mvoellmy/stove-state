@@ -14,7 +14,7 @@
 
 # PyCharm
 .idea/
-.npy
+*.npy
 
 *.DS_Store
 *.pyc
