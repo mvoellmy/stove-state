@@ -1,7 +1,7 @@
 import cv2
-import numpy as np
+import random
 from matplotlib import pyplot as plt
-
+from math import cos, sin, pi, inf, sqrt
 from fitEllipse import *
 
 
@@ -24,7 +24,7 @@ def histogram_equalization(img):
     return cdf[img]
 
 
-def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False):
+def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARCH'):
 
     if histeq:
         img = histogram_equalization(img)
@@ -57,51 +57,165 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
 
     max_axes = 0
 
-    for cnt in contours:
-        mask = np.zeros(canny.shape, np.uint8)
-        cv2.drawContours(mask, [cnt], 0, 255, -1)
+    if method == 'RANSAC':
+        nr_samples = 3
+        nr_iterations = 40
+        max_score = 0
 
-        edge = mask * canny
-        edges.append(edge)
+        for it in range(nr_iterations):
+            edges = []
 
-        if _plot_cnt:
-            plt.subplot(211), plt.imshow(mask, cmap='gray')
-            plt.title('Mask'), plt.xticks([]), plt.yticks([])
-            plt.subplot(212), plt.imshow(edge, cmap='gray')
-            plt.title('Contour'), plt.xticks([]), plt.yticks([])
-            plt.show()
+            candidate_cnts = random.sample(contours, nr_samples)
+            mask = np.zeros(canny.shape, np.uint8)
 
-        pixelpoints = np.transpose(np.nonzero(mask))
-        x = pixelpoints[:, 0]
-        y = pixelpoints[:, 1]
+            for cnt in candidate_cnts:
+                # mask contours
+                cv2.drawContours(mask, [cnt], 0, 255, -1)
 
-        a = fitEllipse(x, y)
-        center = ellipse_center(a)
-        # phi = ellipse_angle_of_rotation(a)
-        phi = ellipse_angle_of_rotation2(a)
-        axes = ellipse_axis_length(a)
+            edge = mask * canny
 
-        if max_axes < axes[0] + axes[1]:
-            max_axes = axes[0] + axes[1]
+            # Get individual pixels from mask
+            pixelpoints = np.transpose(np.nonzero(edge))
+            x = pixelpoints[:, 0]
+            y = pixelpoints[:, 1]
 
-            if phi > 3.1415/2:
-                phi = phi - 3.1415/2
+            a = fitEllipse(x, y)
+            center = ellipse_center(a)
+            # phi = ellipse_angle_of_rotation(a)
+            phi = ellipse_angle_of_rotation2(a)
+            axes = ellipse_axis_length(a)
 
             arc_ = 2
             R_ = np.arange(0, arc_ * np.pi, 0.01)
             a, b = axes
             xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
             yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
-            x_max = x
-            y_max = y
-            phi_max = phi
-            axes_max = axes
-            center_max = center
 
-    if _plot_ellipse:
-        # plt.scatter(y, x,color='green', s=1, zorder=2)
-        plt.scatter(yy, xx, color='red', s=1, zorder=3)
-        # print('Phi ={}'.format(phi_max*180/3.1415))
-    plt.show()
+            curr_score = 0
+            # todo: pad mask
+
+            for (x_it, y_it) in zip(xx, yy):
+                if mask.shape[0] > x_it > 0 and mask.shape[1] > y_it > 0:
+                    if mask[int(y_it), int(x_it)] == 255:
+                        curr_score += 1
+
+            if curr_score*(axes[0] + axes[1]) > max_score:
+                if phi > 3.1415/2:
+                    phi = phi - 3.1415/2
+
+                x_max = x
+                y_max = y
+                phi_max = phi
+                axes_max = axes
+                center_max = center
+                max_score = curr_score*(axes[0] + axes[1])
+                #print('NEW MAX SCORE: {}'.format(max_score))
+
+    elif method == 'MAX_ARCH':
+        for cnt in contours:
+            # mask contours
+            mask = np.zeros(canny.shape, np.uint8)
+            cv2.drawContours(mask, [cnt], 0, 255, -1)
+
+            edge = mask * canny
+            edges.append(edge)
+
+            if _plot_cnt:
+                plt.subplot(211), plt.imshow(mask, cmap='gray')
+                plt.title('Mask'), plt.xticks([]), plt.yticks([])
+                plt.subplot(212), plt.imshow(edge, cmap='gray')
+                plt.title('Contour'), plt.xticks([]), plt.yticks([])
+                plt.show()
+
+            pixelpoints = np.transpose(np.nonzero(edge))
+            x = pixelpoints[:, 0]
+            y = pixelpoints[:, 1]
+
+            a = fitEllipse(x, y)
+            center = ellipse_center(a)
+            # phi = ellipse_angle_of_rotation(a)
+            phi = ellipse_angle_of_rotation2(a)
+            axes = ellipse_axis_length(a)
+
+            if max_axes < axes[0] + axes[1]:
+                max_axes = axes[0] + axes[1]
+
+                if phi > 3.1415/2:
+                    phi = phi - 3.1415/2
+
+                arc_ = 2
+                R_ = np.arange(0, arc_ * np.pi, 0.01)
+                a, b = axes
+                xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
+                yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
+                x_max = x
+                y_max = y
+                phi_max = phi
+                axes_max = axes
+                center_max = center
+
+    elif method == 'CONVEX':
+        for cnt in contours:
+            mask = np.zeros(canny.shape, np.uint8)
+            cv2.drawContours(mask, [cnt], 0, 255, -1)
+
+            edge = mask * canny
+
+            pixelpoints = np.transpose(np.nonzero(edge))
+
+            center_point_id = int(len(pixelpoints)/2)
+
+            # find center point
+            center_point = pixelpoints[center_point_id, :]
+            # draw tangent
+            min_dis = inf
+            best_r = 0
+            best_theta = 0
+            tangent_range = 10
+            for theta in range(180):
+                # compute line
+                x_cent = center_point[1]
+                y_cent = center_point[0]
+
+                r = x_cent*cos(theta*pi/180) + y_cent*sin(theta*pi/180)
+                dis = 0
+                for point in pixelpoints[(center_point_id - tangent_range):(center_point_id + tangent_range), :]:
+                    dis += abs(point[1]*cos(theta*pi/180) + point[0]*sin(theta*pi/180) - r) / sqrt(cos(theta*pi/180)**2 + sin(theta*pi/180)**2)
+
+                print('distance: {} angle: {}'.format(dis, theta))
+
+                if dis < min_dis:
+                    min_dis = dis
+                    best_r = r
+                    best_theta = theta
+
+            print(best_theta)
+
+            tangent_length = 20
+
+            tangent_start_x = x_cent + sin(best_theta*pi/180)*tangent_length
+            tangent_end_x = x_cent - sin(best_theta*pi/180)*tangent_length
+
+            tangent_start_y = y_cent + cos(best_theta*pi/180)*tangent_length
+            tangent_end_y = y_cent - cos(best_theta*pi/180)*tangent_length
+
+            print(tangent_end_y)
+            print(tangent_start_y)
+
+            plt.subplot(211), plt.imshow(mask, cmap='gray')
+            plt.title('Mask'), plt.xticks([]), plt.yticks([])
+            plt.subplot(212), plt.imshow(edge, cmap='gray')
+            plt.title('Contour'), plt.xticks([]), plt.yticks([])
+            plt.subplot(212), plt.scatter(center_point[1], center_point[0], color='red', s=5, zorder=3)
+            plt.plot([tangent_start_x, tangent_end_x], [tangent_start_y, tangent_end_y], color='red', linestyle='-', linewidth=2)
+            plt.show()
+
+            # Group Convex contours
+
+        if _plot_ellipse:
+            # plt.scatter(y, x,color='green', s=1, zorder=2)
+            plt.scatter(yy, xx, color='red', s=1, zorder=3)
+            # print('Phi ={}'.format(phi_max*180/3.1415))
+        plt.show()
 
     return center_max,axes_max, phi_max, xx, yy

@@ -11,4 +11,4 @@ img_path = '../../../data/stills/hot_butter_in_pan.PNG'
 
 img = cv2.imread(img_path)
 
-locate_pan(img, rgb=True, _plot_ellipse=True)
+locate_pan(img, rgb=True, _plot_ellipse=False, method='CONVEX')
