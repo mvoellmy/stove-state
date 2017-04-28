@@ -21,8 +21,9 @@ video_path = 'I_2017-04-06-20_08_45_begg.mp4'
 video_path = 'demovideo.mp4'
 model_name = '2017-04-27-15_19_51'
 
-ellipse_method = 'CONVEX'
 ellipse_method = 'RANSAC'
+ellipse_method = 'MAX_ARCH'
+ellipse_method = 'CONVEX'
 
 # Load pan detect model
 pan_model = pickle.load(open(models_path + 'M_' + model_name + '.sav', 'rb'))
@@ -31,7 +32,7 @@ pan_model = pickle.load(open(models_path + 'M_' + model_name + '.sav', 'rb'))
 _params = {}
 for key, val in csv.reader(open(models_path + 'I_' + model_name + '.csv')):
     _params[key] = val
-    print('     {}: {}'.format(key, type(val)))
+    print('     {}: {}'.format(key, val))
 
 # Read config
 config = configparser.ConfigParser()
@@ -51,7 +52,6 @@ plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
 cap = cv2.VideoCapture(video_path)
 frame_id = 0
 nr_of_frames = int(cap.get(7))
-
 
 # for image in images
 while frame_id < nr_of_frames:
@@ -77,8 +77,8 @@ while frame_id < nr_of_frames:
         cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)), int(-phi*180/3.1415), 0, 360, (0, 0, 255), thickness=5)
 
     cv2.putText(patch, str(label_predicted), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
-   # cv2.imshow('predicted', patch)
-    cv2.waitKey(1)
+    #cv2.imshow('predicted', patch)
+    #cv2.waitKey(1)
 
 # check if pan is detected -> fit patch to model
 #   if detected:

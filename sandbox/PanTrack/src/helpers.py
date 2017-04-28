@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
+import networkx as nx
+from networkx.algorithms.approximation import max_clique
 from skimage import feature
+from math import cos, sin, pi, inf, sqrt
+from matplotlib import pyplot as plt
 
 
 def mse(imageA, imageB):
@@ -55,3 +59,73 @@ def histogram_equalization(img):
     cdf = np.ma.filled(cdf_m, 0).astype('uint8')
 
     return cdf[img]
+
+
+def point_to_line(point, theta, r):
+    '''
+    :param point: 
+    :param theta: 
+    :param r: 
+    :return: -1: Point is closer to center than line
+             1:  Point is farther to center than line
+             0:  Point is on line
+    '''
+    if (point[1] * cos(theta * pi / 180) + point[0] * sin(theta * pi / 180) - r) < 0:
+        return -1
+    elif (point[1] * cos(theta * pi / 180) + point[0] * sin(theta * pi / 180) - r) > 0:
+        return 1
+    else:
+        return 0
+
+
+def points_to_line(pixelpoints, best_theta, best_r, _plot_tangent=False):
+    '''
+    :param pixelpoints: 
+    :param best_theta: 
+    :param best_r: 
+    :param _plot_tangent:
+    :return: ratio: Ratio between points on both sides
+             direction: side on which most points are
+                        -1: Point is closer to center than line
+                        1:  Point is farther to center than line
+                        0:  Point is on line
+    '''
+
+    # Find Convex contours
+    outer = 0
+    inner = 0
+    online = 0
+
+    # https://math.stackexchange.com/questions/757591/how-to-determine-the-side-on-which-a-point-lies
+    for point in pixelpoints:
+        if point_to_line(point, best_theta, best_r) == -1:
+            inner += 1
+            if _plot_tangent:
+                plt.scatter(point[1], point[0], color='green', s=5, zorder=4)
+        elif point_to_line(point, best_theta, best_r) == 1:
+            outer += 1
+            if _plot_tangent:
+                plt.scatter(point[1], point[0], color='blue', s=5, zorder=4)
+        elif point_to_line(point, best_theta, best_r) == 0:
+            online += 1
+            if _plot_tangent:
+                plt.scatter(point[1], point[0], color='yellow', s=5, zorder=4)
+
+    plt.show()
+
+    if outer < inner:
+        ratio = outer / inner
+        direction = -1
+    elif outer > inner:
+        ratio = inner / outer
+        direction = 1
+    else:
+        ratio = 1
+        direction = 0
+
+    return ratio, direction
+
+
+def get_max_clique(c):
+    G = nx.from_numpy_matrix(c)
+    return nx.make_max_clique_graph(G)
