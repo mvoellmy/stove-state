@@ -71,14 +71,18 @@ while frame_id < nr_of_frames:
     label_predicted = pan_model.predict(hog)
 
     if label_predicted == 0:
-        center, axes, phi, xx, yy = locate_pan(patch, _plot_ellipse=0, method=ellipse_method)
+        center, axes, phi, x, y = locate_pan(patch, _plot_ellipse=0, method=ellipse_method)
         center = center[::-1]
         axes = axes[::-1]
         cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)), int(-phi*180/3.1415), 0, 360, (0, 0, 255), thickness=5)
+        for x_it, y_it in zip(x, y):
+            cv2.circle(patch, (y_it, x_it), 2, (0, 255, 0), -1)
 
     cv2.putText(patch, str(label_predicted), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
-    #cv2.imshow('predicted', patch)
-    #cv2.waitKey(1)
+    cv2.imshow('predicted', patch)
+    cv2.waitKey(1)
+
+
 
 # check if pan is detected -> fit patch to model
 #   if detected:

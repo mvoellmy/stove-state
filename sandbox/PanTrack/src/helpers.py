@@ -128,4 +128,4 @@ def points_to_line(pixelpoints, best_theta, best_r, _plot_tangent=False):
 
 def get_max_clique(c):
     G = nx.from_numpy_matrix(c)
-    return nx.make_max_clique_graph(G)
+    return list(nx.find_cliques(G))

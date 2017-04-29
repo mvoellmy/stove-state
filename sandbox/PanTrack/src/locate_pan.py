@@ -39,7 +39,6 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
         plt.title('Elipses'), plt.xticks([]), plt.yticks([])
         plt.imshow(img, cmap='gray', zorder=1)
 
-    max_axes = 0
 
     if method == 'RANSAC':
         nr_samples = 3
@@ -96,6 +95,8 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
                 #print('NEW MAX SCORE: {}'.format(max_score))
 
     elif method == 'MAX_ARCH':
+        max_axes = 0
+
         for cnt in contours:
             # mask contours
             mask = np.zeros(canny.shape, np.uint8)
@@ -140,6 +141,8 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
 
     elif method == 'CONVEX':
 
+        max_axes = 0
+
         # Parameters
         tangent_range = 20      # How many pixels are to be considered for tangent fitting into both directions
         tangent_length = 100    # How long the plotted tangent is
@@ -148,6 +151,7 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
         angle_resolution = 180  # Number of angles to be checked for tangent between 1° and 180°
         _plot_tangent = False
         _plot_convex_edges = False
+        _plot_max_clique = False
         convex_edges = []
         convex_tangents = []
 
@@ -216,63 +220,96 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
 
         c = np.eye(len(convex_edges))
 
-        # convex_edges are points
-        convex_comp_edges = convex_edges[1::]
-        convex_comp_tangents = convex_tangents[1::]
+        if _plot_convex_edges:
+            # convex_edges are points
+            plt.figure()
+            plt.imshow(img)
+            for convex_edge in convex_edges:
+                plt.scatter(convex_edge[:, 1], convex_edge[:, 0])
+                plt.pause(1)
 
-        convex_edges = convex_edges[:-1]
-        convex_tangents = convex_tangents[:-1]
+        # i: original
+        # j: comparison
+        convex_edges_i = convex_edges[:-1]
+        convex_tangents_i = convex_tangents[:-1]
+
+        convex_edges_j = convex_edges[1::]
+        convex_tangents_j = convex_tangents[1::]
 
 
-        plt.figure()
-        # todo Group convex Contours
-        plt.imshow(img)
-        for i, (convex_edge, convex_tangent) in enumerate(zip(convex_edges, convex_tangents)):
-            plt.scatter(convex_edge[:,1], convex_edge[:,0])
-            plt.pause(1)
-            for j, (convex_comp_edge, convex_comp_tangent) in enumerate(zip(convex_comp_edges, convex_comp_tangents)):
-                ratio_ij, direction_ij = points_to_line(convex_comp_edge, convex_tangent[0], convex_tangent[1], _plot_tangent=False)
-                ratio_ji, direction_ji = points_to_line(convex_edge, convex_comp_tangent[0], convex_comp_tangent[1], _plot_tangent=False)
-                #print(ratio_ij, direction_ij, convex_tangent[2])
-                #print(ratio_ji, direction_ji, convex_comp_tangent[2])
+        for i, (convex_edge_i, convex_tangent_i) in enumerate(zip(convex_edges_i, convex_tangents_i)):
+            #print('outer:{}'.format(i))
 
-                if (ratio_ij < convex_ratio_threshold and direction_ij == convex_tangent[2]) and\
-                   (ratio_ji < convex_ratio_threshold and direction_ji == convex_comp_tangent[2]):
+            for j, (convex_edge_j, convex_tangent_j) in enumerate(zip(convex_edges_j, convex_tangents_j)):
+                #print('inner:{}'.format(i))
+                ratio_ij, direction_ij = points_to_line(convex_edge_j, convex_tangent_i[0], convex_tangent_i[1], _plot_tangent=False)
+                ratio_ji, direction_ji = points_to_line(convex_edge_i, convex_tangent_j[0], convex_tangent_j[1], _plot_tangent=False)
+                #print(ratio_ij, direction_ij, convex_tangent_i[2])
+                #print(ratio_ji, direction_ji, convex_tangent_j[2])
+
+                if (ratio_ij < convex_ratio_threshold and direction_ij == convex_tangent_i[2]) and\
+                   (ratio_ji < convex_ratio_threshold and direction_ji == convex_tangent_j[2]):
                     c[i, i+j+1] = 1
 
-                convex_comp_edges = convex_comp_edge[1::]
-                convex_comp_tangents = convex_comp_tangents[1::]
+            convex_edges_j = convex_edges_j[1::]
+            convex_tangents_j = convex_tangents_j[1::]
+
+        found_cliques = get_max_clique(c)
+        max_clique_len = 0
+        max_cliques = []
+
+        for clique in found_cliques:
+            if len(clique) > max_clique_len:
+                max_clique_len = len(clique)
+                max_cliques = []
+                max_cliques.append(clique)
+            elif len(clique) == max_clique_len:
+                max_cliques.append(clique)
+
+        for clique in max_cliques:
+            for it, edge_id in enumerate(clique):
+                if it == 0:
+                    pixelpoints = convex_edges[edge_id]
+                else:
+                    pixelpoints = np.append(pixelpoints, convex_edges[edge_id], axis=0)
 
 
-        # print(c)
+            x = pixelpoints[:, 0]
+            y = pixelpoints[:, 1]
 
-        max_clique_graph = get_max_clique(c)
+            # Fit Ellipse and get parameters
+            a = fitEllipse(x, y)
+            center = ellipse_center(a)
+            # phi = ellipse_angle_of_rotation(a)
+            phi = ellipse_angle_of_rotation2(a)
+            axes = ellipse_axis_length(a)
 
-        print(max_clique_graph.nodes())
+            # todo define better criterion than ellipse size
+            if max_axes < axes[0] + axes[1]:
+                max_axes = axes[0] + axes[1]
 
-        pixelpoints = np.transpose(np.nonzero(edge))
-        x = pixelpoints[:, 0]
-        y = pixelpoints[:, 1]
+                if phi > 3.1415 / 2:
+                    phi = phi - 3.1415 / 2
 
-        a = fitEllipse(x, y)
-        center = ellipse_center(a)
-        # phi = ellipse_angle_of_rotation(a)
-        phi = ellipse_angle_of_rotation2(a)
-        axes = ellipse_axis_length(a)
+                arc_ = 2
+                R_ = np.arange(0, arc_ * np.pi, 0.01)
+                a, b = axes
+                xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
+                yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
+                x_max = x
+                y_max = y
+                phi_max = phi
+                axes_max = axes
+                center_max = center
+                max_clique = pixelpoints
 
-        if phi > 3.1415 / 2:
-            phi = phi - 3.1415 / 2
+            if _plot_max_clique:
+                # convex_edges are points
+                plt.figure()
+                plt.imshow(img)
+                plt.scatter(pixelpoints[:, 1], pixelpoints[:, 0])
+                plt.pause(1)
 
-        arc_ = 2
-        R_ = np.arange(0, arc_ * np.pi, 0.01)
-        a, b = axes
-        xx = center[0] + a * np.cos(R_) * np.cos(phi) - b * np.sin(R_) * np.sin(phi)
-        yy = center[1] + a * np.cos(R_) * np.sin(phi) + b * np.sin(R_) * np.cos(phi)
-        x_max = x
-        y_max = y
-        phi_max = phi
-        axes_max = axes
-        center_max = center
 
     if _plot_ellipse:
         # plt.scatter(y, x,color='green', s=1, zorder=2)
@@ -280,4 +317,4 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
         # print('Phi ={}'.format(phi_max*180/3.1415))
     plt.show()
 
-    return center_max,axes_max, phi_max, xx, yy
+    return center_max,axes_max, phi_max, x_max, y_max
