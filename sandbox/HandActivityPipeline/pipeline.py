@@ -66,8 +66,13 @@ def PCA_direction(segmented_CC, centroid):
 
 ######################################################################################
 
-def pipeline(cap, path_feature_file=[], path_video_file=[]):
-    centroid_old = np.array([0,0])
+def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
+    ret, background = cap_video.read()
+    background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
+    background_segmented = segmentation_RGB(background)
+    background_final, centroid, validation = connected_components(background_segmented)
+
+    centroid_old = [] #np.array([0,0])
     centroid_vel = np.array([0,0],dtype=np.float)
     if path_feature_file != []:
         print(path_feature_file + "_features.csv")
@@ -86,8 +91,7 @@ def pipeline(cap, path_feature_file=[], path_video_file=[]):
 
         # Color Segmentation --------------------------------------------
         segmented = segmentation_RGB(frame)
-        # background_segmented = segmentation_RGB(background)
-        # segmented_sub = segmented - background_segmented
+        segmented_sub = segmented - background_final
 
         # Connected Components -----------------------------------------
         segmented_final, centroid, validation = connected_components(segmented)
@@ -97,8 +101,8 @@ def pipeline(cap, path_feature_file=[], path_video_file=[]):
         segmented_final_color = cv2.cvtColor(segmented_final, cv2.COLOR_GRAY2RGB)
         if validation:
             # Compute centroid velocity ---------------------------------------------
-            centroid_vel = centroid - centroid_old
-            centroid_old = centroid
+            if centroid_old != []:
+                centroid_vel = centroid - centroid_old
             vel_abs = math.sqrt(centroid_vel[0]**2 + centroid_vel[1]**2)
 
             # Compute Hand Orientation using PCA -------------------------------------
@@ -112,11 +116,11 @@ def pipeline(cap, path_feature_file=[], path_video_file=[]):
             segmented_final_color = cv2.line(segmented_final_color, (a, b), (c, d), (0, 0, 255), 10)
 
             # Write features --------------------------------------------------------
-            if path_feature_file != []:
+            if path_feature_file != [] and centroid_old != []:
                 # print("ctr_u, ctr_v, vel_u, vel_v, orient: {} {} {}".format(centroid, centroid_vel, orientation*180/3.1415))
                 features_file.write(str(centroid[0]) + " " + str(centroid[1]) + " " + str(centroid_vel[0]) + " " + str(
                     centroid_vel[1]) + " " + str(orientation) + "\n")
-
+            centroid_old = centroid
         # HMM ----------------------------------------------------------------------
         num_history = 5
         if validation:
@@ -135,7 +139,7 @@ def pipeline(cap, path_feature_file=[], path_video_file=[]):
             condition = any(hand_in_frame)
             gesture_history += 1
             gesture_num = gesture_history
-        frame = cv2.putText(frame, gestures[gesture_num], (50, 100), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 0), 5)
+        # frame = cv2.putText(frame, gestures[gesture_num], (50, 100), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 0), 5)
 
         # Display Images -----------------------------------------------------------
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
@@ -153,7 +157,7 @@ def pipeline(cap, path_feature_file=[], path_video_file=[]):
             if out == []:
                 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
                 out = cv2.VideoWriter(path_video_file, fourcc, 25.0, (dim[1], dim[0]), True)
-            out.write(frame)
+            out.write(segmented_final_color)
 
     # Clear all objects
     cv2.destroyAllWindows()
