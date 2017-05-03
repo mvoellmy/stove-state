@@ -1,5 +1,6 @@
 import cv2
 import random
+import scipy
 from matplotlib import pyplot as plt
 from math import cos, sin, pi, inf, sqrt
 from fitEllipse import *
@@ -7,7 +8,7 @@ from fitEllipse import *
 from helpers import histogram_equalization, points_to_line, get_max_clique
 
 
-def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARCH'):
+def locate_pan(img, rgb=False, histeq=True, _plot_canny=True, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARCH'):
     plt.ion()
 
     if histeq:
@@ -15,7 +16,7 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
     if rgb:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    canny = cv2.Canny(img, 100, 200)
+    canny = cv2.Canny(img, 150, 300)
 
     if _plot_canny:
         plt.subplot(211), plt.imshow(img, cmap='gray')
@@ -154,6 +155,16 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
         _plot_max_clique = False
         convex_edges = []
         convex_tangents = []
+
+        # for cnt in contours:
+        #     mask = np.zeros(canny.shape, np.uint8)
+        #     cv2.drawContours(mask, [cnt], 0, 255, -1)
+        #     edge = mask * canny
+        #     pixelpoints = np.transpose(np.nonzero(edge))
+        #
+        #     line = scipy.interpolate.Akima1DInterpolator(pixelpoints[:, 0], pixelpoints[:, 1])
+        #     for point in pixelpoints:
+        #         print(line(point[1]) - point[0])
 
         for cnt in contours:
             mask = np.zeros(canny.shape, np.uint8)
