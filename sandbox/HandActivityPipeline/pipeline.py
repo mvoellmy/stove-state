@@ -75,7 +75,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
     centroid_old = [] #np.array([0,0])
     centroid_vel = np.array([0,0],dtype=np.float)
     if path_feature_file != []:
-        print(path_feature_file + "_features.csv")
+        print(path_feature_file)
         features_file = open(path_feature_file, "w")
     out = []
     hand_in_frame = []
@@ -157,7 +157,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
             if out == []:
                 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
                 out = cv2.VideoWriter(path_video_file, fourcc, 25.0, (dim[1], dim[0]), True)
-            out.write(segmented_final_color)
+            out.write(frame)
 
     # Clear all objects
     cv2.destroyAllWindows()
