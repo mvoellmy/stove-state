@@ -14,10 +14,10 @@ from math import pi
 from locate_pan import locate_pan
 from helpers import mse, get_HOG
 
-plt.figure()
-input('should be a figure here....')
 # Params
-_ellipse_smoothing = 'ACCU'
+_ellipse_smoothing = 'AVERAGE'
+_ellipse_smoothing = 'VOTE'
+_ellipse_smoothing = 'RAW'
 
 # Options
 cfg_path = '../../../cfg/class_cfg.txt'
@@ -25,12 +25,13 @@ features_path = '../features/'
 models_path = '../models/'
 
 video_path = 'I_2017-04-06-20_08_45_begg.mp4'
-video_path = 'demovideo.mp4'
-model_name = '2017-04-27-15_19_51'
+video_path = 'demovideo.mp4' # I_begg1
+model_name = '2017-04-27-15_19_51' # I_begg1
+
 
 ellipse_method = 'RANSAC'
+ellipse_method = 'MAX_ARC'
 ellipse_method = 'CONVEX'
-ellipse_method = 'MAX_ARCH'
 
 # Load pan detect model
 pan_model = pickle.load(open(models_path + 'M_' + model_name + '.sav', 'rb'))
@@ -51,7 +52,6 @@ corners = np.reshape(ast.literal_eval(config.get(_params['stove_type'], "corners
 plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
 
 
-
 # pan localization model
 # object recognition model
 #
@@ -61,7 +61,7 @@ frame_id = 0
 ellips_counter = 0
 nr_of_frames = int(cap.get(7))
 
-if _ellipse_smoothing == 'ACCU':
+if _ellipse_smoothing == 'VOTE':
     res_center = 300
     res_phi = 180
     res_axes = 300
@@ -90,7 +90,7 @@ while frame_id < nr_of_frames:
     if label_predicted == 0:
         ellips_counter += 1
 
-        raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=0, method=ellipse_method)
+        raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=ellipse_method)
         raw_center = raw_center[::-1]
         raw_axes = raw_axes[::-1]
 
@@ -101,7 +101,7 @@ while frame_id < nr_of_frames:
                 center = (center*(ellips_counter-1) + raw_center)/ellips_counter
                 axes = (axes*(ellips_counter-1) + raw_axes)/ellips_counter
                 phi = (phi*(ellips_counter-1) + raw_phi)/ellips_counter
-        elif _ellipse_smoothing == 'ACCU':
+        elif _ellipse_smoothing == 'VOTE':
 
             patch_size = patch.shape
             accu_center[0, int(raw_center[0]/patch_size[0]*res_center)] += 1
@@ -119,7 +119,7 @@ while frame_id < nr_of_frames:
                 axes[1] = np.argmax(accu_axes[1, :])*(patch_size[1])/res_axes
                 phi = np.argmax(accu_phi)*pi/res_phi
 
-        else:
+        elif _ellipse_smoothing == 'RAW':
             center, axes, phi = raw_center, raw_axes, raw_phi
 
         cv2.ellipse(patch, tuple(map(int, raw_center)), tuple(map(int, raw_axes)), int(-raw_phi*180/pi), 0, 360, (255, 0, 0), thickness=2)
@@ -127,25 +127,29 @@ while frame_id < nr_of_frames:
         for x_it, y_it in zip(x, y):
             cv2.circle(patch, (y_it, x_it), 2, (0, 255, 0), -1)
 
+        # Run Object Segementation/Recognition inside pan
+
     cv2.putText(patch, str(label_predicted), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
     cv2.imshow('predicted', patch)
     cv2.waitKey(1)
-
-
-# plt.figure()
-# plt.subplot(321), plt.hist(accu_center[0, :])
+#
+# plt.subplot(321), plt.hist(accu_center[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Center Voting'), plt.xticks([]), plt.yticks([])
-# plt.subplot(322), plt.hist(accu_center[1, :])
+# plt.grid(True)
+# plt.subplot(322), plt.hist(accu_center[1, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Center Voting'), plt.xticks([]), plt.yticks([])
-# plt.subplot(323), plt.hist(accu_axes[0, :])
+# plt.grid(True)
+# plt.subplot(323), plt.hist(accu_axes[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Axes Voting'), plt.xticks([]), plt.yticks([])
-# plt.subplot(324), plt.hist(accu_axes[1, :])
+# plt.grid(True)
+# plt.subplot(324), plt.hist(accu_axes[1, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Axes Voting'), plt.xticks([]), plt.yticks([])
-# plt.subplot(325), plt.hist(accu_phi[0, :])
+# plt.grid(True)
+# plt.subplot(325), plt.hist(accu_phi[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Phi Voting'), plt.xticks([]), plt.yticks([])
+# plt.grid(True)
 
-# plt.show()
-input('Program finished')
+
 # check if pan is detected -> fit patch to model
 #   if detected:
 #       locate pan
