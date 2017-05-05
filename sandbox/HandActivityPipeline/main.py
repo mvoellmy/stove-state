@@ -21,15 +21,17 @@ file_names = ['I_2017-04-06-20_08_45_begg',
              'I_20170424_210116_begg',
              'I_20170428_224946_begg',
              'I_20170430_210819_begg',
-             'I_20170503_232838_begg']
+             'I_20170503_232838_begg',
+             'I_20170504_215844_begg']
 # file_names = ['I_20170425_205126_scegg',
 #               'I_20170427_212553_scegg']
-file_names = ['I_20170501_212055_segg',
-              'I_20170502_212256_segg',
-              'I_20170503_234946_segg']
-file_names = [ file_names[2] ]
+# file_names = ['I_20170501_212055_segg',
+#               'I_20170502_212256_segg',
+#               'I_20170503_234946_segg',
+#               'I_20170504_221703_segg']
+file_names = [ file_names[8] ]
 num_files = len(file_names)
-num_gestures = 8
+num_gestures = 7
 
 for file_name in file_names:
     for gesture_num in range(1,num_gestures+1):
