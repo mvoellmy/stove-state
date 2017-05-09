@@ -14,6 +14,7 @@ imgs =['http://i.imgur.com/xszf2ld.png',  # Stovetop with noodles
        ]
 
 img_idx = 5
+# http://demo.caffe.berkeleyvision.org
 
 model = app.models.get('food-items-v1.0')
 image = ClImage(url=imgs[img_idx])
