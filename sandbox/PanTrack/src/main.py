@@ -16,8 +16,8 @@ from helpers import mse, get_HOG
 
 # Params
 _ellipse_smoothing = 'AVERAGE'
-_ellipse_smoothing = 'VOTE'
 _ellipse_smoothing = 'RAW'
+_ellipse_smoothing = 'VOTE'
 
 # Options
 cfg_path = '../../../cfg/class_cfg.txt'
@@ -30,8 +30,8 @@ model_name = '2017-04-27-15_19_51' # I_begg1
 
 
 ellipse_method = 'RANSAC'
-ellipse_method = 'MAX_ARC'
 ellipse_method = 'CONVEX'
+ellipse_method = 'MAX_ARC'
 
 # Load pan detect model
 pan_model = pickle.load(open(models_path + 'M_' + model_name + '.sav', 'rb'))
