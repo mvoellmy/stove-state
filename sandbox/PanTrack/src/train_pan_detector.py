@@ -40,7 +40,7 @@ features_name = '2017-04-27-15_17_27'
 _load_features = True
 _train_model = True
 _perc_jump = 10
-_max_label_features = 2000
+_max_features = 5000
 
 _use_rgb = False
 _locate_pan = False
@@ -92,7 +92,7 @@ else:
 
         shuffle(img_list)
         for it, img in enumerate(img_list):
-            if nr_of_label_features >= _max_label_features:
+            if nr_of_label_features >= _max_features/len(class_list):
                 print("Max number of features for class {} has been reached".format(label_name))
                 break
 
