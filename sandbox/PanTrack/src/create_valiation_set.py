@@ -71,7 +71,7 @@ elif action == 2:
 
         # check if validation images are there:
         val_img_list = [f for f in os.listdir(path_val + label_name) if os.path.isfile(os.path.join(path_val + label_name, f))
-                    and img_type in f]
+                        and img_type in f]
         if val_img_list:
             input('Carefull! There are already {0:.2f}% validation images! Run undo split first!'.
                   format(len(val_img_list)*100/(len(val_img_list)+len(img_list))))

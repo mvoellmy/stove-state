@@ -2,9 +2,7 @@ import cv2
 import configparser
 import ast
 import numpy as np
-import csv
-import os.path
-import time
+
 import pickle
 from matplotlib import pyplot as plt
 
@@ -19,38 +17,43 @@ _ellipse_smoothing = 'AVERAGE'
 _ellipse_smoothing = 'RAW'
 _ellipse_smoothing = 'VOTE'
 
+_ellipse_method = 'RANSAC'
+_ellipse_method = 'MAX_ARC'
+_ellipse_method = 'CONVEX'
+
 # Options
+polybox_path = '/Users/miro/Polybox/Shared/stove-state-data/ssds/'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_path = '../features/'
-models_path = '../models/'
+
+features_path = polybox_path + 'pan_detect/features/'
+models_path = polybox_path + 'pan_detect/models/'
 
 video_path = 'I_2017-04-06-20_08_45_begg.mp4'
-video_path = 'demovideo.mp4' # I_begg1
-model_name = '2017-04-27-15_19_51' # I_begg1
+video_path = 'test2.mp4'  # I_begg1
+model_name = '2017-04-27-15_19_51'  # I_begg1
+model_name = '2017-05-11-16_44_38'
 
 
-ellipse_method = 'RANSAC'
-ellipse_method = 'CONVEX'
-ellipse_method = 'MAX_ARC'
 
 # Load pan detect model
 pan_model = pickle.load(open(models_path + 'M_' + model_name + '.sav', 'rb'))
 
 # Load pan_detect info file
-_params = {}
-for key, val in csv.reader(open(models_path + 'I_' + model_name + '.csv')):
-    _params[key] = val
-    print('     {}: {}'.format(key, val))
+with open(models_path + 'I_' + model_name + '.txt', 'r') as file:
+    _params = eval(file.read())
+
+print('Model parameters: ')
+for key, val in _params.items():
+    print('\t{}: {}'.format(key, val))
+
 
 # Read config
 config = configparser.ConfigParser()
 config.read(cfg_path)
 
 # Read corners and reshape them into 2d-Array
-corners = np.reshape(ast.literal_eval(config.get(_params['stove_type'], "corners")), (-1, 4))
-
-plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
-
+corners = np.reshape(_params['corners'], (-1, 4))
+plate_of_interest = int(_params['plate_of_interest'])
 
 # pan localization model
 # object recognition model
@@ -77,7 +80,7 @@ while frame_id < nr_of_frames:
 
     # Todo: put preprocessing function here:
     patch = frame[corners[plate_of_interest - 1, 1]:corners[plate_of_interest - 1, 3],
-            corners[plate_of_interest - 1, 0]:corners[plate_of_interest - 1, 2]]
+                  corners[plate_of_interest - 1, 0]:corners[plate_of_interest - 1, 2]]
 
     # hog = get_HOG(patch, orientations=int(_params['orientations']),
     #               pixels_per_cell=_params['pixels_per_cell'],
@@ -85,12 +88,13 @@ while frame_id < nr_of_frames:
     #               widthPadding=int(_params['widthPadding']))
 
     hog = get_HOG(patch)
-    label_predicted = pan_model.predict(hog)
+    label_predicted_id = pan_model.predict(hog)
+    label_predicted_name = _params['labels'][int(label_predicted_id)]
 
-    if label_predicted == 0:
+    if 'pan' in label_predicted_name or 'lid' in label_predicted_name:
         ellips_counter += 1
 
-        raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=ellipse_method)
+        raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=_ellipse_method)
         raw_center = raw_center[::-1]
         raw_axes = raw_axes[::-1]
 
@@ -129,7 +133,7 @@ while frame_id < nr_of_frames:
 
         # Run Object Segementation/Recognition inside pan
 
-    cv2.putText(patch, str(label_predicted), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
+    cv2.putText(patch, str(label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
     cv2.imshow('predicted', patch)
     cv2.waitKey(1)
 #

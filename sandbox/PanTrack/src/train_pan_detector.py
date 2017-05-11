@@ -32,19 +32,19 @@ _params = {'stove_type':        'I',
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-11-14_52_03'
+features_name = '2017-05-11-15_52_55'
 
 _train_model = True
 _load_features = _train_model
 _max_features = 5000
 _test_size = 0.3
 
-_use_mse = False
+_use_mse = True
 _use_rgb = False
 _locate_pan = False
 
 # Output Options
-_print_update_rate = 100
+_print_update_rate = 1000
 _plot_fails = True
 _plot_patches = False
 
@@ -63,6 +63,7 @@ plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
 features_path = polybox_path + 'pan_detect/features/'
 models_path = polybox_path + 'pan_detect/models/'
 data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
+data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 
 # get classes
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
@@ -83,11 +84,11 @@ if _load_features:
 
     # load info file
     _params = {}
-    print('Parameters: ')
 
     with open(features_path + 'I_' + features_name + '.txt', 'r') as file:
         _params = eval(file.read())
 
+    print('Parameters: ')
     for key, val in _params.items():
         print('\t{}: {}'.format(key, val))
 
@@ -98,21 +99,21 @@ else:
 
         img_list = [f for f in os.listdir(data_path + label_name) if os.path.isfile(os.path.join(data_path + label_name, f))
                     and img_type in f]
-        print('{}:\nExtracting features from {} images...'.format(label_name, len(img_list)))
+        print('Extracting features from {1} images of label {0}'.format(label_name, len(img_list)))
 
         # Randomize img list so
-        shuffle(img_list)
-        for it, img in enumerate(img_list):
+        # shuffle(img_list)
+        for img_nr, img_name in enumerate(img_list):
             if nr_of_label_features >= _max_features/len(label_types):
                 print("Max number of features for class {} has been reached".format(label_name))
                 break
 
-            frame = cv2.imread(data_path + label_name + '/' + img, 0)
+            frame = cv2.imread(data_path + label_name + '/' + img_name, 0)
             patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
                           corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
             # Check the mean squared error between two consecutive frames
-            if it == 0 or not _use_mse or mse(patch, old_patch)\
+            if img_nr == 0 or not _use_mse or mse(patch, old_patch)\
                     > threshold:
 
                 patch_normalized = histogram_equalization(patch)
@@ -139,8 +140,9 @@ else:
                 # cv2.imshow('frame', frame)
                 cv2.waitKey(1)
 
-            if it >= print_update_state:
-                print("{}/{} features extracted".format(it, len(img_list)))
+            if img_nr >= print_update_state:
+                print("{}/{} features extracted".format(len(labels), _max_features))
+                print("{}/{} images processed".format(img_nr, len(img_list)))
                 print_update_state = print_update_state + _print_update_rate
 
             old_patch = patch
@@ -175,13 +177,13 @@ if _train_model:
     train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
-        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        {'kernel': ['linear'], 'C': [1000]},
+        {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        {'kernel': ['linear'], 'C': [1, 50, 100]},
         # {'kernel': ['poly'], 'degree': [2]}
     ]
 
     # Grid search object with SVM classifier.
-    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=1)
+    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=10)
     print("GridSearch Object created")
     print("Starting training")
     clf.fit(train_data, train_labels)
