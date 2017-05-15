@@ -54,9 +54,11 @@ def PCA_direction(segmented_CC, centroid):
     sort_indices = np.argsort(evals)[::-1]
     evec1, evec2 = evecs[:, sort_indices]
     x_v1, y_v1 = evec1  # Eigenvector with largest eigenvalue
-    x_v2, y_v2 = evec2
-    if y_v1 > 0:        # staehlii: cheat to avoid orientation jumping around
-        y_v1 *= -1
+    y_v2, x_v2 = evec2
+
+    if abs(x_v1) > abs(y_v1) and np.sign(x_v1) == 1: # staehlii: cheat to avoid orientation jumping around
+        y_v1 = - y_v1
+
     scale = 100
     x1 = int(x_v1*-scale + centroid[1])
     x2 = int(x_v1*scale + centroid[1])
@@ -67,10 +69,10 @@ def PCA_direction(segmented_CC, centroid):
 ######################################################################################
 
 def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
-    ret, background = cap_video.read()
-    background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
-    background_segmented = segmentation_RGB(background)
-    background_final, centroid, validation = connected_components(background_segmented)
+    # ret, background = cap_video.read()
+    # background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
+    # background_segmented = segmentation_RGB(background)
+    # background_final, centroid, validation = connected_components(background_segmented)
 
     centroid_old = [] #np.array([0,0])
     centroid_vel = np.array([0,0],dtype=np.float)
@@ -91,7 +93,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
 
         # Color Segmentation --------------------------------------------
         segmented = segmentation_RGB(frame)
-        segmented_sub = segmented - background_final
+        # segmented_sub = segmented - background_final
 
         # Connected Components -----------------------------------------
         segmented_final, centroid, validation = connected_components(segmented)
@@ -143,7 +145,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
 
         # Display Images -----------------------------------------------------------
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
-        cv2.imshow("Frame", frame)
+        cv2.imshow("Frame", segmented)
         cv2.resizeWindow("Frame", int(dim[1]/2), int(dim[0]/2))
         cv2.namedWindow("Segmented", cv2.WINDOW_NORMAL)
         cv2.imshow("Segmented", segmented_final_color)  #segmented_final_color

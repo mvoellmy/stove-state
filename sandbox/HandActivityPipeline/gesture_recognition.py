@@ -13,26 +13,42 @@ label_names = ['place pan', 'pour water', 'place egg', 'place lid', 'remove lid'
 begg_labels = [1, -1, 2, 3, 4, 5, 6]
 
 
-label_names = ['palce', 'remove', 'season', 'other']
-begg_labels = [1, -1, 1, 1, 2, 2, 2]
-segg_labels = [1, 4, 1, 1, 2, 3, 2, 2]
+label_names = ['place', 'remove', 'season', 'other']
+begg_labels = [1, -1, 1, 1, 2, 2, 2, 4]
+segg_labels = [1, 1, 1, 1, 2, 3, 2, 2, 4]
 
 # label_names = ['pan-gesture', 'food-gesture', 'lid-gesture', 'season', 'stirr', 'other']
 # begg_labels = [1, -1, 2, 3, 3, 2, 1]
 # segg_labels = [1, 6, 2, 3, 3, 4, 2, 1]
 
 scegg_labels = [1, 6, 2, 2, 5, 4, 1]
+file_names_begg = np.array(['I_2017-04-06-20_08_45_begg',
+                            'I_2017-04-13-21_26_55_begg',
+                            'I_20170419_232724_begg',       # -> 2 other gesture
+                            'I_raspivid_20170421_begg',
+                            'I_20170424_210116_begg',
+                            'I_20170428_224946_begg',
+                            'I_20170430_210819_begg',
+                            'I_20170503_232838_begg',
+                            'I_20170504_215844_begg',       # -> 1 other gesture
+                            'I_20170505_214143_begg'])      # -> different position on stove
+
+file_names_segg = np.array(['I_20170501_212055_segg',
+                            'I_20170502_212256_segg',       # -> 2 other gestures
+                            'I_20170503_234946_segg',       # -> 2 other gestures
+                            'I_20170504_221703_segg',       # -> 3 other gestures
+                            'I_20170505_220258_segg'])      # -> different position on stove
 
 count_correct_predictions = 0
 count_predictions = 0
 for begg_val_idx in range(0,1):
     for segg_val_idx in range(0,1):
         path_features = 'gesture_features/begg/'
-        out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=[begg_val_idx])
+        out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=begg_val_idx, file_names=file_names_begg)
         data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out
 
         path_features = 'gesture_features/segg/'
-        out2 = extract_features(path_features, num_gestures=8, label_encoder=segg_labels, test_file_idx=[segg_val_idx])
+        out2 = extract_features(path_features, num_gestures=8, label_encoder=segg_labels, test_file_idx=segg_val_idx, file_names=file_names_segg)
         data_train2, labels_train2, labels_range_train2, data_test2, labels_test2, labels_range_test2 = out2
 
         data_train = np.concatenate((data_train, data_train2))
@@ -89,6 +105,7 @@ for begg_val_idx in range(0,1):
         counter = labels_test*0
         print("Predict each Keyframe")
         print("Correct predictions \t Predicted Labels")
+        predictions = np.zeros((len(label_names), len(labels_test)))
         for i in range(0,N):
             # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
             clf = svm.SVC()
@@ -97,8 +114,9 @@ for begg_val_idx in range(0,1):
             clf.fit(STF_train[:,:,i], labels_train)
             # predicted_labels = clf.predict(STF_test[:,i].reshape(-1,1))
             predicted_labels = clf.predict(STF_test[:,:,i])
+            predictions[np.array(predicted_labels)-1, np.array(range(0,len(labels_test)))] += 1
             counter += (labels_test == predicted_labels) * 1
-            # print("{} \t\t\t {}".format((labels_test == predicted_labels) * 1, predicted_labels))
+            print("{} \t\t\t {}".format((labels_test == predicted_labels) * 1, predicted_labels))
 
         print("Percentage of correct guesses")
         print(counter/N)
@@ -108,5 +126,7 @@ for begg_val_idx in range(0,1):
 
 print("Accuracy")
 print(count_correct_predictions/count_predictions)
+
+print(predictions)
 
 plt.show()
