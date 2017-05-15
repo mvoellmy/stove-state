@@ -21,18 +21,22 @@ _ellipse_method = 'RANSAC'
 _ellipse_method = 'MAX_ARC'
 _ellipse_method = 'CONVEX'
 
-# Options
-polybox_path = '/Users/miro/Polybox/Shared/stove-state-data/ssds/'
+
+# Read config
 cfg_path = '../../../cfg/class_cfg.txt'
+config = configparser.ConfigParser()
+config.read(cfg_path)
+
+polybox_path = config.get('paths', 'polybox')
 
 features_path = polybox_path + 'pan_detect/features/'
 models_path = polybox_path + 'pan_detect/models/'
+video_path = polybox_path + 'pan_detect/test_videos'
 
 video_path = 'I_2017-04-06-20_08_45_begg.mp4'
 video_path = 'test2.mp4'  # I_begg1
 model_name = '2017-04-27-15_19_51'  # I_begg1
-model_name = '2017-05-11-16_44_38'
-
+model_name = '2017-05-11-16_44_38'  # I_4 pan1
 
 
 # Load pan detect model
@@ -46,10 +50,6 @@ print('Model parameters: ')
 for key, val in _params.items():
     print('\t{}: {}'.format(key, val))
 
-
-# Read config
-config = configparser.ConfigParser()
-config.read(cfg_path)
 
 # Read corners and reshape them into 2d-Array
 corners = np.reshape(_params['corners'], (-1, 4))
@@ -92,6 +92,7 @@ while frame_id < nr_of_frames:
     label_predicted_name = _params['labels'][int(label_predicted_id)]
 
     if 'pan' in label_predicted_name or 'lid' in label_predicted_name:
+
         ellips_counter += 1
 
         raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=_ellipse_method)
@@ -136,7 +137,10 @@ while frame_id < nr_of_frames:
     cv2.putText(patch, str(label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
     cv2.imshow('predicted', patch)
     cv2.waitKey(1)
-#
+
+
+
+
 # plt.subplot(321), plt.hist(accu_center[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Center Voting'), plt.xticks([]), plt.yticks([])
 # plt.grid(True)
@@ -160,6 +164,3 @@ while frame_id < nr_of_frames:
 #       display state
 #           run object recognition inside pan elipse:
 #           display object
-
-
-

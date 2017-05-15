@@ -193,15 +193,16 @@ if _train_model:
 
     print("Starting test dataset...")
     labels_predicted = clf.predict(test_data)
-    _model_params = {'model_accuracy': (labels_predicted == test_labels).mean(),
-                     'model_params': clf.best_params_,
+    _model_info = {'accuracy': (labels_predicted == test_labels).mean(),
+                     'best_params': clf.best_params_,
                      'test_size': _test_size}
 
-    _params['model_params'] = _model_params
+    _params['model_params'] = _model_info
 
-    print("Test Accuracy {}".format(_model_params['model_accuracy']))
+    print("Test Accuracy {}".format(_model_info['model_accuracy']))
 
-    if input('Save model? [y/n]').lower() == 'y':
+    if input('Save model? [y/n]\n').lower() == 'y':
+        _params['model_params']['notes'] = str(input('Notes about model:\n'))
         # save the model to disk
         m_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
         model_name = models_path + 'M_' + m_time_name + '.sav'
