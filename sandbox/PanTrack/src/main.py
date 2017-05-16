@@ -1,10 +1,9 @@
 import cv2
 import configparser
-import ast
 import numpy as np
+import os
 
 import pickle
-from matplotlib import pyplot as plt
 
 from math import pi
 
@@ -18,8 +17,8 @@ _ellipse_smoothing = 'RAW'
 _ellipse_smoothing = 'VOTE'
 
 _ellipse_method = 'RANSAC'
-_ellipse_method = 'MAX_ARC'
 _ellipse_method = 'CONVEX'
+_ellipse_method = 'MAX_ARC'
 
 # Options
 polybox_path = '/Users/miro/Polybox/Shared/stove-state-data/ssds/'
@@ -28,11 +27,16 @@ cfg_path = '../../../cfg/class_cfg.txt'
 features_path = polybox_path + 'pan_detect/features/'
 models_path = polybox_path + 'pan_detect/models/'
 
-video_path = 'I_2017-04-06-20_08_45_begg.mp4'
-video_path = 'test2.mp4'  # I_begg1
-model_name = '2017-04-27-15_19_51'  # I_begg1
-model_name = '2017-05-11-16_44_38'
+video_name = 'I_2017-04-06-20_08_45_begg.mp4'
+video_name = 'begg_test_2.mp4'      # I_begg1
+video_name = 'I_20170425_205126_scegg.mp4'     # I_scegg
+video_name = 'I_20170504_221703_segg.mp4'      # I_scegg
+video_name = 'segg_short.mov'      # I_scegg
+video_path = os.path.join(polybox_path, 'pan_detect', 'test_videos', video_name)
 
+model_name = '2017-05-11-16_44_38'
+model_name = '2017-04-27-15_19_51'  # I_begg1
+model_name = '2017-05-15-15_27_09'  # I_2 segg/scegg
 
 
 # Load pan detect model
@@ -87,7 +91,12 @@ while frame_id < nr_of_frames:
     #               cells_per_block=_params['cells_per_block'],
     #               widthPadding=int(_params['widthPadding']))
 
-    hog = get_HOG(patch)
+    hog = get_HOG(patch,
+                  orientations=_params['feature_params']['orientations'],
+                  pixels_per_cell=_params['feature_params']['pixels_per_cell'],
+                  cells_per_block=_params['feature_params']['cells_per_block'],
+                  widthPadding=_params['feature_params']['widthPadding'])
+
     label_predicted_id = pan_model.predict(hog)
     label_predicted_name = _params['labels'][int(label_predicted_id)]
 

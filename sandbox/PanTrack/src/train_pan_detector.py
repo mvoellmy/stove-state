@@ -17,14 +17,14 @@ from locate_pan import locate_pan
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
-_feature_params = {'orientations':      4,
+_feature_params = {'orientations':      6,
                    'pixels_per_cell':   (16, 16),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
-           'plate_of_interest': 4,
+           'plate_of_interest': 2,
            'feature_type':      'HOG',
            'nr_of_features':    0,
            'feature_params':    _feature_params}
@@ -32,21 +32,23 @@ _params = {'stove_type':        'I',
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-11-15_52_55'
+features_name = '2017-05-11-15_52_55'  # I_4 begg
+features_name = '2017-05-15-11_16_02'  # I_2 scegg and segg
 
-_train_model = True
+
+_train_model = False
 _load_features = _train_model
 _max_features = 5000
 _test_size = 0.3
 
 _use_mse = True
 _use_rgb = False
-_locate_pan = False
 
 # Output Options
 _print_update_rate = 1000
 _plot_fails = True
 _plot_patches = False
+_locate_pan = False
 
 # Read Config data
 config = configparser.ConfigParser()
@@ -57,13 +59,13 @@ _params['corners'] = ast.literal_eval(config.get(_params['stove_type'], "corners
 corners = np.reshape(_params['corners'], (-1, 4))
 polybox_path = config.get('paths', 'polybox')
 threshold = float(config.get(_params['stove_type'], "threshold"))
-plate_of_interest = int(config.get(_params['stove_type'], "plate_of_interest"))
+plate_of_interest = _params['plate_of_interest']
 
 # More Paths
 features_path = polybox_path + 'pan_detect/features/'
 models_path = polybox_path + 'pan_detect/models/'
-data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
+data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 
 # get classes
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
@@ -112,6 +114,8 @@ else:
             patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
                           corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
+            print(frame.shape)
+
             # Check the mean squared error between two consecutive frames
             if img_nr == 0 or not _use_mse or mse(patch, old_patch)\
                     > threshold:
@@ -151,7 +155,7 @@ else:
         print_update_state = _print_update_rate
 
     _params['labels'] = label_types
-    _params['nr_features'] = len(data)
+    _params['nr_of_features'] = len(data)
 
     print('Feature extraction finished!')
     print('---------------------------')

@@ -40,7 +40,6 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
         plt.title('Elipses'), plt.xticks([]), plt.yticks([])
         plt.imshow(img, cmap='gray', zorder=1)
 
-
     if method == 'RANSAC':
         nr_samples = 3
         nr_iterations = 40
@@ -321,11 +320,11 @@ def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, 
                 plt.scatter(pixelpoints[:, 1], pixelpoints[:, 0])
                 plt.pause(1)
 
-
     if _plot_ellipse:
         # plt.scatter(y, x,color='green', s=1, zorder=2)
         plt.scatter(yy, xx, color='red', s=1, zorder=3)
         # print('Phi ={}'.format(phi_max*180/3.1415))
+
     plt.show()
 
     return center_max,axes_max, phi_max, x_max, y_max
