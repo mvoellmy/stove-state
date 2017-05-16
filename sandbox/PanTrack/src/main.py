@@ -8,7 +8,7 @@ import pickle
 from math import pi
 
 # Own Libraries
-from locate_pan import locate_pan
+from panlocator import PanLocator
 from helpers import mse, get_HOG
 
 # Params
@@ -20,7 +20,9 @@ _ellipse_method = 'RANSAC'
 _ellipse_method = 'CONVEX'
 _ellipse_method = 'MAX_ARC'
 
-_start_frame = 700
+_segment = False
+
+_start_frame = 200
 
 # Read config
 cfg_path = '../../../cfg/class_cfg.txt'
@@ -66,28 +68,24 @@ plate_of_interest = int(_params['plate_of_interest'])
 cap = cv2.VideoCapture(video_path)
 fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 
+# init pan_locator
+pan_locator = PanLocator(_ellipse_smoothing=_ellipse_smoothing, _ellipse_method=_ellipse_method)
 
 frame_id = 0
 ellips_counter = 0
-nr_of_frames = int(cap.get(7))
+_end_frame = int(cap.get(7))
 
-if _ellipse_smoothing == 'VOTE':
-    res_center = 300
-    res_phi = 180
-    res_axes = 300
-    accu_center = np.zeros((2, res_center))
-    accu_phi = np.zeros((1, res_phi))
-    accu_axes = np.zeros((2, res_axes))
 
 # for image in images
-# while frame_id < 300:
-while frame_id < nr_of_frames:
+while True:
 
     ret, frame = cap.read()
     frame_id += 1
 
     if frame_id < _start_frame:
         continue
+    elif frame_id - _start_frame > _end_frame:
+        break
 
     # Todo: put preprocessing function here:
     patch = frame[corners[plate_of_interest - 1, 1]:corners[plate_of_interest - 1, 3],
@@ -109,61 +107,30 @@ while frame_id < nr_of_frames:
 
     if 'pan' in label_predicted_name or 'lid' in label_predicted_name:
 
-        ellips_counter += 1
-
-        raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=_ellipse_method)
-        raw_center = raw_center[::-1]
-        raw_axes = raw_axes[::-1]
-
-        if _ellipse_smoothing == 'AVERAGE':
-            if ellips_counter == 1:
-                center, axes, phi = raw_center, raw_axes, raw_phi
-            else:
-                center = (center*(ellips_counter-1) + raw_center)/ellips_counter
-                axes = (axes*(ellips_counter-1) + raw_axes)/ellips_counter
-                phi = (phi*(ellips_counter-1) + raw_phi)/ellips_counter
-        elif _ellipse_smoothing == 'VOTE':
-
-            patch_size = patch.shape
-            accu_center[0, int(raw_center[0]/patch_size[0]*res_center)] += 1
-            accu_center[1, int(raw_center[1]/patch_size[1]*res_center)] += 1
-            accu_axes[0, np.min([res_axes-1, int(raw_axes[0]/(patch_size[0])*res_axes)])] += 1
-            accu_axes[1, np.min([res_axes-1, int(raw_axes[1]/(patch_size[1])*res_axes)])] += 1
-            accu_phi[0, int(raw_phi/pi*res_phi)] += 1
-
-            if ellips_counter < 3:
-                center, axes, phi = raw_center, raw_axes, raw_phi
-            else:
-                center[0] = np.argmax(accu_center[0, :])*patch_size[0]/res_center
-                center[1] = np.argmax(accu_center[1, :])*patch_size[1]/res_center
-                axes[0] = np.argmax(accu_axes[0, :])*(patch_size[0])/res_axes
-                axes[1] = np.argmax(accu_axes[1, :])*(patch_size[1])/res_axes
-                phi = np.argmax(accu_phi)*pi/res_phi
-
-        elif _ellipse_smoothing == 'RAW':
-            center, axes, phi = raw_center, raw_axes, raw_phi
-
+        center, axes, phi = pan_locator.find_pan(patch)
 
         # for x_it, y_it in zip(x, y):
         #    cv2.circle(patch, (y_it, x_it), 2, (0, 255, 0), -1)
 
         # cv2.ellipse(patch, tuple(map(int, raw_center)), tuple(map(int, raw_axes)),
         #             int(-raw_phi*180/pi), 0, 360, (255, 0, 0), thickness=2)
-        # cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
-        #             int(-phi*180/pi), 0, 360, (0, 0, 255), thickness=5)
-        #
+        cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
+                    int(-phi*180/pi), 0, 360, (0, 0, 255), thickness=5)
+
         # Run Object Segementation/Recognition inside pan
         mask = np.zeros_like(patch)
         ellipse_mask = cv2.ellipse(mask, tuple(map(int, center)), tuple(map(int, axes)),
                                      int(-phi*180/pi), 0, 360, (255, 255, 255), thickness=-1)
 
-        masked_patch = np.bitwise_and(patch, ellipse_mask)
         # masked_patch = masked_patch[]
-
-        fgmask = fgbg.apply(patch)
-        fgmask = np.dstack((fgmask, fgmask, fgmask))
-        plot_patch = np.bitwise_and(masked_patch, fgmask)
-        plot_patch = masked_patch
+        if _segment:
+            masked_patch = np.bitwise_and(patch, ellipse_mask)
+            fgmask = fgbg.apply(patch)
+            fgmask = np.dstack((fgmask, fgmask, fgmask))
+            plot_patch = np.bitwise_and(masked_patch, fgmask)
+            plot_patch = masked_patch
+        else:
+            plot_patch = patch
 
     else:
         plot_patch = patch

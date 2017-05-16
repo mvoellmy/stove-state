@@ -13,7 +13,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 
 # Own Libraries
-from locate_pan import locate_pan
+from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
@@ -76,6 +76,8 @@ data = []
 patches = []
 print_update_state = _print_update_rate
 
+# initialize Ellipse fitter
+pan_locator = PanLocator()
 
 # Build or load Features
 if _load_features:
@@ -114,8 +116,6 @@ else:
             patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
                           corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
-            print(frame.shape)
-
             # Check the mean squared error between two consecutive frames
             if img_nr == 0 or not _use_mse or mse(patch, old_patch)\
                     > threshold:
@@ -133,7 +133,7 @@ else:
                 nr_of_label_features += 1
 
                 if _locate_pan:
-                    locate_pan(patch, _plot_ellipse=True)
+                    pan_locator.find_pan(patch, _plot_ellipse=True)
 
                 if _plot_fails:
                     patches.append(patch)
