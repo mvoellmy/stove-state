@@ -13,7 +13,8 @@ class PanLocator:
     def __init__(self, _ellipse_smoothing='VOTE', _ellipse_method='CONVEX', _plot_ellipse=True):
         self._ellipse_smoothing = _ellipse_smoothing
         self._ellipse_method = _ellipse_method
-        self.ellips_counter = 0
+        self._plot_ellipse = _plot_ellipse
+        self.ellipse_counter = 0
         
         # Vote Parameters and Containers
         self.res_center = 300
@@ -28,21 +29,28 @@ class PanLocator:
         self.axes = []
         self.phi = 0
 
+    def reset_voting(self):
+        self.ellipse_counter = 0
+        self.accu_center = np.zeros((2, self.res_center))
+        self.accu_phi = np.zeros((1, self.res_phi))
+        self.accu_axes = np.zeros((2, self.res_center))
+
+
     def find_pan(self, patch, _plot_ellipse=False):
 
-        self.ellips_counter += 1
+        self.ellipse_counter += 1
 
-        raw_center, raw_axes, raw_phi, x, y = self.locate_pan(patch, _plot_ellipse=_plot_ellipse, method=self._ellipse_method)
+        raw_center, raw_axes, raw_phi, x, y = self.locate_pan(patch, _plot_ellipse=_plot_ellipse, method=self._ellipse_method, self._plot_ellipse)
         raw_center = raw_center[::-1]
         raw_axes = raw_axes[::-1]
 
         if self._ellipse_smoothing == 'AVERAGE':
-            if self.ellips_counter == 1:
+            if self.ellipse_counter == 1:
                 self.center, self.axes, self.phi = raw_center, raw_axes, raw_phi
             else:
-                self.center = (self.center*(self.ellips_counter-1) + raw_center)/self.ellips_counter
-                self.axes = (self.axes*(self.ellips_counter-1) + raw_axes)/self.ellips_counter
-                self.phi = (self.phi*(self.ellips_counter-1) + raw_phi)/self.ellips_counter
+                self.center = (self.center * (self.ellipse_counter - 1) + raw_center) / self.ellipse_counter
+                self.axes = (self.axes * (self.ellipse_counter - 1) + raw_axes) / self.ellipse_counter
+                self.phi = (self.phi * (self.ellipse_counter - 1) + raw_phi) / self.ellipse_counter
         elif self._ellipse_smoothing == 'VOTE':
 
             patch_size = patch.shape
@@ -52,7 +60,7 @@ class PanLocator:
             self.accu_axes[1, np.min([self.res_center - 1, int(raw_axes[1] / (patch_size[1]) * self.res_center)])] += 1
             self.accu_phi[0, int(raw_phi/pi*self.res_phi)] += 1
 
-            if self.ellips_counter < 3:
+            if self.ellipse_counter < 3:
                 self.center, self.axes, self.phi = raw_center, raw_axes, raw_phi
             else:
                 self.center[0] = np.argmax(self.accu_center[0, :])*patch_size[0]/self.res_center
@@ -64,14 +72,7 @@ class PanLocator:
         elif self._ellipse_smoothing == 'RAW':
             self.center, self.axes, self.phi = raw_center, raw_axes, raw_phi
 
-
-
-
-
-
-
         return self.center, self.axes, self.phi
-
 
     def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
         plt.ion()
