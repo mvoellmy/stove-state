@@ -7,7 +7,6 @@ from fitEllipse import *
 
 from helpers import histogram_equalization, points_to_line, get_max_clique
 
-
 def locate_pan(img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
     plt.ion()
 

@@ -10,6 +10,7 @@ write_dict['tuple'] = (1, 2)
 write_dict['list'] = [1, 2, 5]
 write_dict['dict'] = {'tuple': (1, 2),
                       'string': 'this is a string'}
+
 # ...add additional datatypes here to see if it works...
 # These DO NOT WORK:
 # write_dict['np_array'] = np.zeros(3)

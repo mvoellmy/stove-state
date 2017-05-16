@@ -20,6 +20,7 @@ _ellipse_method = 'RANSAC'
 _ellipse_method = 'CONVEX'
 _ellipse_method = 'MAX_ARC'
 
+_start_frame = 700
 
 # Read config
 cfg_path = '../../../cfg/class_cfg.txt'
@@ -34,9 +35,9 @@ video_path = polybox_path + 'pan_detect/test_videos'
 
 
 video_name = 'I_2017-04-06-20_08_45_begg.mp4'
-video_name = 'begg_test_2.mp4'      # I_begg1
 video_name = 'I_20170425_205126_scegg.mp4'     # I_scegg
 video_name = 'I_20170504_221703_segg.mp4'      # I_scegg
+video_name = 'begg_test_2.mp4'      # I_begg1
 video_name = 'segg_short.mov'      # I_scegg
 video_path = os.path.join(polybox_path, 'pan_detect', 'test_videos', video_name)
 
@@ -61,11 +62,11 @@ for key, val in _params.items():
 corners = np.reshape(_params['corners'], (-1, 4))
 plate_of_interest = int(_params['plate_of_interest'])
 
-# pan localization model
-# object recognition model
-#
 # import images or videos or video stream
 cap = cv2.VideoCapture(video_path)
+fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+
+
 frame_id = 0
 ellips_counter = 0
 nr_of_frames = int(cap.get(7))
@@ -81,8 +82,12 @@ if _ellipse_smoothing == 'VOTE':
 # for image in images
 # while frame_id < 300:
 while frame_id < nr_of_frames:
-    frame_id += 1
+
     ret, frame = cap.read()
+    frame_id += 1
+
+    if frame_id < _start_frame:
+        continue
 
     # Todo: put preprocessing function here:
     patch = frame[corners[plate_of_interest - 1, 1]:corners[plate_of_interest - 1, 3],
@@ -138,17 +143,36 @@ while frame_id < nr_of_frames:
         elif _ellipse_smoothing == 'RAW':
             center, axes, phi = raw_center, raw_axes, raw_phi
 
-        cv2.ellipse(patch, tuple(map(int, raw_center)), tuple(map(int, raw_axes)), int(-raw_phi*180/pi), 0, 360, (255, 0, 0), thickness=2)
-        cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)), int(-phi*180/pi), 0, 360, (0, 0, 255), thickness=5)
-        for x_it, y_it in zip(x, y):
-            cv2.circle(patch, (y_it, x_it), 2, (0, 255, 0), -1)
 
+        # for x_it, y_it in zip(x, y):
+        #    cv2.circle(patch, (y_it, x_it), 2, (0, 255, 0), -1)
+
+        # cv2.ellipse(patch, tuple(map(int, raw_center)), tuple(map(int, raw_axes)),
+        #             int(-raw_phi*180/pi), 0, 360, (255, 0, 0), thickness=2)
+        # cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
+        #             int(-phi*180/pi), 0, 360, (0, 0, 255), thickness=5)
+        #
         # Run Object Segementation/Recognition inside pan
+        mask = np.zeros_like(patch)
+        ellipse_mask = cv2.ellipse(mask, tuple(map(int, center)), tuple(map(int, axes)),
+                                     int(-phi*180/pi), 0, 360, (255, 255, 255), thickness=-1)
 
-    cv2.putText(patch, str(label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 100, 0))
-    cv2.imshow('predicted', patch)
+        masked_patch = np.bitwise_and(patch, ellipse_mask)
+        # masked_patch = masked_patch[]
+
+        fgmask = fgbg.apply(patch)
+        fgmask = np.dstack((fgmask, fgmask, fgmask))
+        plot_patch = np.bitwise_and(masked_patch, fgmask)
+        plot_patch = masked_patch
+
+    else:
+        plot_patch = patch
+
+    cv2.putText(plot_patch, str(label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+    cv2.imshow('predicted', plot_patch)
     cv2.waitKey(1)
-#
+
+
 # plt.subplot(321), plt.hist(accu_center[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Center Voting'), plt.xticks([]), plt.yticks([])
 # plt.grid(True)
