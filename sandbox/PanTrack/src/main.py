@@ -2,7 +2,6 @@ import cv2
 import configparser
 import numpy as np
 import os
-
 import pickle
 
 from math import pi
@@ -31,8 +30,8 @@ config.read(cfg_path)
 
 polybox_path = config.get('paths', 'polybox')
 
-features_path = polybox_path + 'pan_detect/features/'
-models_path = polybox_path + 'pan_detect/models/'
+features_path = polybox_path + 'pan_detect/pan_features/'
+models_path = polybox_path + 'pan_detect/pan_models/'
 video_path = polybox_path + 'pan_detect/test_videos'
 
 

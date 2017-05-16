@@ -35,12 +35,11 @@ class PanLocator:
         self.accu_phi = np.zeros((1, self.res_phi))
         self.accu_axes = np.zeros((2, self.res_center))
 
-
     def find_pan(self, patch, _plot_ellipse=False):
 
         self.ellipse_counter += 1
 
-        raw_center, raw_axes, raw_phi, x, y = self.locate_pan(patch, _plot_ellipse=_plot_ellipse, method=self._ellipse_method, self._plot_ellipse)
+        raw_center, raw_axes, raw_phi, x, y = self.locate_pan(patch, _plot_ellipse=_plot_ellipse, method=self._ellipse_method)
         raw_center = raw_center[::-1]
         raw_axes = raw_axes[::-1]
 

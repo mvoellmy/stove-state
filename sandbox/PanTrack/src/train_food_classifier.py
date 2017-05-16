@@ -7,6 +7,7 @@ import time
 import pickle
 
 from random import shuffle
+
 # Sk learn
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -16,24 +17,22 @@ from sklearn.svm import SVC
 from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
-# Hog Params
-_feature_params = {'orientations':      6,
-                   'pixels_per_cell':   (16, 16),
-                   'cells_per_block':   (4, 4),
-                   'widthPadding':      10}
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
            'plate_of_interest': 2,
-           'feature_type':      'HOG',
-           'nr_of_features':    0,
-           'feature_params':    _feature_params}
+           'feature_type':      'RGB_HIST',
+           'nr_of_features':    0}
 
+if _params['feature_type'] == 'RGB_HIST':
+    # RGB Histogram Params
+    _feature_params = {'resolution': 20}
+
+_params['feature_params'] = _feature_params
 
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-11-15_52_55'  # I_4 begg
 features_name = '2017-05-15-11_16_02'  # I_2 scegg and segg
 
 
@@ -63,8 +62,8 @@ threshold = float(config.get(_params['stove_type'], "threshold"))
 plate_of_interest = _params['plate_of_interest']
 
 # More Paths
-features_path = polybox_path + 'pan_detect/pan_features/'
-models_path = polybox_path + 'pan_detect/pan_models/'
+features_path = polybox_path + 'pan_detect/food_features/'
+models_path = polybox_path + 'pan_detect/food_models/'
 data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 
@@ -121,20 +120,19 @@ else:
             if img_nr == 0 or not _use_mse or mse(patch, old_patch)\
                     > threshold:
 
-                patch_normalized = histogram_equalization(patch)
-                hog = get_HOG(patch_normalized,
-                              orientations=_feature_params['orientations'],
-                              pixels_per_cell=_feature_params['pixels_per_cell'],
-                              cells_per_block=_feature_params['cells_per_block'],
-                              widthPadding=_feature_params['widthPadding'])
+                pan_locator.find_pan(patch, _plot_ellipse=True)
 
-                data.append(hog)
+                patch_normalized = histogram_equalization(patch)
+
+                feature = np.dstack(cv2.calcHist([patch], [0], None, [256], [0, 256]),
+                                    cv2.calcHist([patch], [1], None, [256], [0, 256]),
+                                    cv2.calcHist([patch], [2], None, [256], [0, 256]))
+
+                data.append(feature)
                 labels.append(label_nr)
 
                 nr_of_label_features += 1
 
-                if _locate_pan:
-                    pan_locator.find_pan(patch, _plot_ellipse=True)
 
                 if _plot_fails:
                     patches.append(patch)
