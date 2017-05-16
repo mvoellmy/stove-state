@@ -20,12 +20,18 @@ _ellipse_method = 'RANSAC'
 _ellipse_method = 'CONVEX'
 _ellipse_method = 'MAX_ARC'
 
-# Options
-polybox_path = '/Users/miro/Polybox/Shared/stove-state-data/ssds/'
+
+# Read config
 cfg_path = '../../../cfg/class_cfg.txt'
+config = configparser.ConfigParser()
+config.read(cfg_path)
+
+polybox_path = config.get('paths', 'polybox')
 
 features_path = polybox_path + 'pan_detect/features/'
 models_path = polybox_path + 'pan_detect/models/'
+video_path = polybox_path + 'pan_detect/test_videos'
+
 
 video_name = 'I_2017-04-06-20_08_45_begg.mp4'
 video_name = 'begg_test_2.mp4'      # I_begg1
@@ -50,10 +56,6 @@ print('Model parameters: ')
 for key, val in _params.items():
     print('\t{}: {}'.format(key, val))
 
-
-# Read config
-config = configparser.ConfigParser()
-config.read(cfg_path)
 
 # Read corners and reshape them into 2d-Array
 corners = np.reshape(_params['corners'], (-1, 4))
@@ -101,6 +103,7 @@ while frame_id < nr_of_frames:
     label_predicted_name = _params['labels'][int(label_predicted_id)]
 
     if 'pan' in label_predicted_name or 'lid' in label_predicted_name:
+
         ellips_counter += 1
 
         raw_center, raw_axes, raw_phi, x, y = locate_pan(patch, _plot_ellipse=False, method=_ellipse_method)
@@ -169,6 +172,3 @@ while frame_id < nr_of_frames:
 #       display state
 #           run object recognition inside pan elipse:
 #           display object
-
-
-
