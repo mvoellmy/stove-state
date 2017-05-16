@@ -4,7 +4,7 @@ from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
 from utils import *
 
-
+np.set_printoptions(precision=2)
 
 # [place pan, pour water, place egg, place lid, remove lid, remove egg, remove pan]
 # becomes
@@ -15,11 +15,15 @@ begg_labels = [1, -1, 2, 3, 4, 5, 6]
 
 label_names = ['place', 'remove', 'season', 'other']
 begg_labels = [1, -1, 1, 1, 2, 2, 2, 4]
-segg_labels = [1, 1, 1, 1, 2, 3, 2, 2, 4]
+segg_labels = [1, 4, 1, 1, 2, 3, 2, 2, 4]
 
-# label_names = ['pan-gesture', 'food-gesture', 'lid-gesture', 'season', 'stirr', 'other']
-# begg_labels = [1, -1, 2, 3, 3, 2, 1]
-# segg_labels = [1, 6, 2, 3, 3, 4, 2, 1]
+label_names = ['pan-gesture', 'food-gesture', 'lid-gesture', 'season', 'stirr', 'other']
+begg_labels = [1, -1, 2, 3, 3, 2, 1, 6]
+segg_labels = [1, 6, 2, 3, 3, 4, 2, 1, 6]
+
+label_names = ['place pan', 'place food', 'place lid', 'remove lid', 'remove food', 'remove pan', 'season', 'other']
+begg_labels = [1, -1, 2, 3, 4, 5, 6, 8]
+segg_labels = [1, 8, 2, 3, 4, 7, 5, 6, 8]
 
 scegg_labels = [1, 6, 2, 2, 5, 4, 1]
 file_names_begg = np.array(['I_2017-04-06-20_08_45_begg',
@@ -41,8 +45,8 @@ file_names_segg = np.array(['I_20170501_212055_segg',
 
 count_correct_predictions = 0
 count_predictions = 0
-for begg_val_idx in range(0,1):
-    for segg_val_idx in range(0,1):
+for begg_val_idx in range(1,2):
+    for segg_val_idx in range(3,4):
         path_features = 'gesture_features/begg/'
         out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=begg_val_idx, file_names=file_names_begg)
         data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out
@@ -60,7 +64,7 @@ for begg_val_idx in range(0,1):
 
         fig = plt.figure()
         for i in range(0,len(labels_range_train)-1):
-            plt.subplot(2,3,labels_train[i])
+            plt.subplot(2,4,labels_train[i])
             a = labels_range_train[i]
             b = labels_range_train[i+1]
             plt.plot(data_train[a:b,1], -data_train[a:b,0])
@@ -68,65 +72,78 @@ for begg_val_idx in range(0,1):
         fig.canvas.set_window_title('Trajectories of Training Data')
 
 
-        N = 10 # Number of Spatio Temporal Features
+        N = 14 # Number of Spatio Temporal Features
         STF_train = spatio_temporal_features(data_train, labels_range_train, labels_train, N, label_names, 'Keyframes of Training Data')
         STF_test = spatio_temporal_features(data_test, labels_range_test, labels_test, N, label_names)
 
+        def plot_STF(STF, labels, idx_feature, plot_name):
+            N = STF.shape[2]
+            num_labels = STF_train.shape[0]
+            fig, ax = plt.subplots()
+            cmap = plt.cm.get_cmap('jet',N)
+            color = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7']
+            for i in range(0,num_labels):
+                plt.subplot(2,4,labels[i])
+                plt.scatter(range(0,N), STF[i,idx_feature,:], c=color[labels[i]-1])
+                plt.xlabel('Keyframes', fontsize=10)
+                plt.ylabel('Direction', fontsize=10)
+                plt.title(label_names[labels[i]-1])
+                plt.tight_layout()
+            fig.canvas.set_window_title(plot_name)
 
-        fig, ax = plt.subplots()
-        cmap = plt.cm.get_cmap('jet',N)
-        color = ['b', 'r', 'y', 'g', 'm', 'c']
-        for i in range(0,len(labels_range_train)-1):
-            plt.subplot(2,3,labels_train[i])
-            plt.scatter(range(0,N), STF_train[i,0,:], c=color[labels_train[i]-1])
-            plt.xlabel('Keyframes', fontsize=10)
-            plt.ylabel('Direction', fontsize=10)
-            plt.title(label_names[labels_train[i]-1])
-            plt.tight_layout()
-        fig.canvas.set_window_title('Spatio Temporal Features (STF)')
-
-        print("Actual Labels")
-        print(labels_test)
-
-        # Train using all keyframes as a feature vector
-        # parameters = [
-        #         # {'kernel': ['rbf'], 'gamma': [1, 0.1, 1e-2, 1e-3, 1e-4], 'C': [1, 10, 100, 1000]},
-        #         #{'kernel': ['linear'], 'C': [10, 100, 1000]},
-        #         {'kernel': ['poly'], 'gamma': [0.2], 'C': [100]}
-        #     ]
-        # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
-        # clf.fit(STF_train[:,0,:], labels_train)
-        # predicted_labels = clf.predict(STF_test[:,0,:])
-        # print("Correct predictions \t Predicted Labels")
-        # print("{} \t\t\t {}".format((labels_test==predicted_labels)*1, predicted_labels))
+        # plot_STF(STF_train, labels_train, 0, 'STF - Trajectory orientation')
+        # plot_STF(STF_train, labels_train, 1, 'STF - Hand orientation')
 
         # Train each individual keyframe separately
         predicted = []
         counter = labels_test*0
-        print("Predict each Keyframe")
-        print("Correct predictions \t Predicted Labels")
-        predictions = np.zeros((len(label_names), len(labels_test)))
+        # print("Predict each Keyframe")
+        # print("Correct predictions \t Predicted Labels")
+        predictions = np.zeros((len(label_names), len(labels_test)), dtype=np.int)
+        idx_gesture_to_plot = 6
+        gesture_to_plot = np.zeros((len(label_names), N))
         for i in range(0,N):
             # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
             clf = svm.SVC()
             # clf = RandomForestClassifier(n_estimators=100)
             # clf.fit(STF_train[:,i].reshape(-1,1), labels_train)
+            a = STF_train[:,:,i]
             clf.fit(STF_train[:,:,i], labels_train)
             # predicted_labels = clf.predict(STF_test[:,i].reshape(-1,1))
             predicted_labels = clf.predict(STF_test[:,:,i])
             predictions[np.array(predicted_labels)-1, np.array(range(0,len(labels_test)))] += 1
+            gesture_to_plot[:,i] =  predictions[:,idx_gesture_to_plot]
             counter += (labels_test == predicted_labels) * 1
-            print("{} \t\t\t {}".format((labels_test == predicted_labels) * 1, predicted_labels))
+            # print("{} \t\t\t {}".format((labels_test == predicted_labels) * 1, predicted_labels))
+
+        plt.figure()
+        for i in range(0,len(label_names)):
+            plt.plot(range(0,N), gesture_to_plot[i,:])
+
+        plt.legend(label_names)
 
         print("Percentage of correct guesses")
-        print(counter/N)
-        print((counter/N >= 0.5)*1)
-        count_correct_predictions += ((counter/N >= 0.5)*1).sum()
-        count_predictions += len(counter)
+        print(predictions[np.array(labels_test)-1, np.array(range(0,len(labels_test)))] / N)
+
+        print("Accumulated Labels")
+        print(predictions)
+        sorted_labels = (-predictions).argsort(axis=0)
+        predictions_1st = predictions[sorted_labels[0,:], np.array(range(0,len(labels_test)))] / N
+        predictions_2nd = predictions[sorted_labels[1,:], np.array(range(0,len(labels_test)))] / N
+        final_predictions = sorted_labels[0,:] + 1
+
+        print("Final Predictions")
+        print(final_predictions)
+        print((final_predictions == labels_test)*1)
+        count_correct_predictions += ((final_predictions == labels_test)*1).sum()
+        count_predictions += len(labels_test)
+
+        print("Actual Labels")
+        print(labels_test)
 
 print("Accuracy")
 print(count_correct_predictions/count_predictions)
 
-print(predictions)
+# print(predictions.transpose())
 
 plt.show()

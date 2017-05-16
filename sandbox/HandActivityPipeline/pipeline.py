@@ -19,6 +19,28 @@ def segmentation_RGB(frame):
     segmented = (segmented_inv == np.zeros(segmented_inv.shape))*255
     return segmented.astype(np.uint8)
 
+def segmentation_YCC(frame):
+    # http://stackoverflow.com/questions/14752006/computer-vision-masking-a-human-hand
+    imgYCC = cv2.cvtColor(frame, cv2.COLOR_BGR2YCR_CB)
+    Y = imgYCC[:, :, 0]
+    Cr = imgYCC[:, :, 1]
+    Cb = imgYCC[:, :, 2]
+    skin_ycrcb_mint = np.array((0, 150, 0))
+    skin_ycrcb_maxt = np.array((255, 255, 255))
+    skin_ycrcb = cv2.inRange(imgYCC, skin_ycrcb_mint, skin_ycrcb_maxt)
+
+    return skin_ycrcb
+
+def segmentation_HSV(frame):
+    # http://stackoverflow.com/questions/14752006/computer-vision-masking-a-human-hand
+    skin_min = np.array([0, 0, 120], np.uint8)
+    skin_max = np.array([20, 255, 255], np.uint8)
+    gaussian_blur = cv2.GaussianBlur(frame, (5, 5), 0)
+    blur_hsv = cv2.cvtColor(gaussian_blur, cv2.COLOR_BGR2HSV)
+    segmented = cv2.inRange(blur_hsv, skin_min, skin_max)
+
+    return segmented
+
 def connected_components(segmented):
     ret, labels, stats, centroids = cv2.connectedComponentsWithStats(segmented)
 
@@ -83,6 +105,8 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
     hand_in_frame = []
     gesture_history = 0
     condition = False
+    bMHI = []
+    MH_length = 10
     while (cap.isOpened()):
         ret, frame = cap.read()
 
@@ -142,6 +166,24 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
             gesture_history += 1
             gesture_num = gesture_history
         # frame = cv2.putText(frame, gestures[gesture_num], (50, 100), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 0), 5)
+
+        # Binary Motion History Image (bMHI)
+        # if bMHI == []:
+        #     bMHI = [segmented_final/255]
+        # else:
+        #     bMHI.append(segmented_final/255)
+        #     if len(bMHI) > MH_length:
+        #         bMHI.pop(0)
+        #         final_bHMI = bMHI[-1]*(MH_length+1)
+        #         for i in range(0,MH_length-1):
+        #             final_bHMI += bMHI[i]*(i+1)
+        #         final_bHMI *= 255/np.max(final_bHMI)
+        #         final_bHMI = final_bHMI.astype(np.uint8)
+        #
+        #         cv2.namedWindow("bMHI", cv2.WINDOW_NORMAL)
+        #         cv2.imshow("bMHI", final_bHMI)
+        #         cv2.resizeWindow("bMHI", int(dim[1] / 2), int(dim[0] / 2))
+
 
         # Display Images -----------------------------------------------------------
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)

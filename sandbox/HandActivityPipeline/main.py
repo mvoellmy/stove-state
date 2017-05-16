@@ -28,19 +28,19 @@ file_names = ['I_2017-04-06-20_08_45_begg',
 #               'M_2017-04-11-09_19_16_begg']
 # file_names = ['I_20170425_205126_scegg',
 #               'I_20170427_212553_scegg']
-# file_names = ['I_20170501_212055_segg',
-#               'I_20170502_212256_segg',
-#               'I_20170503_234946_segg',
-#               'I_20170504_221703_segg',
-#               'I_20170505_220258_segg']
+file_names = ['I_20170501_212055_segg',
+              'I_20170502_212256_segg',
+              'I_20170503_234946_segg',
+              'I_20170504_221703_segg',
+              'I_20170505_220258_segg']
 
-# file_names = [ file_names[9] ]
-# num_files = len(file_names)
-# num_gestures = 7
-#
+file_names = [ file_names[1] ]
+num_files = len(file_names)
+num_gestures = 1
+
 # for file_name in file_names:
 #     for gesture_num in range(1,num_gestures+1):
-#         # gesture_num = 3
+#         gesture_num = 3
 #         recipe_name = file_name.rsplit("_", 1)[-1].split(".")[0]  # Takes the word after the last underscore
 #         path_video = join(path_videos, file_name + video_format)
 #         path_gesture = join(path_gestures, recipe_name, '{}'.format(gesture_num), file_name + '.h264')
@@ -52,7 +52,7 @@ file_names = ['I_2017-04-06-20_08_45_begg',
 #         else:
 #             path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features_false.csv")
 #         path_video_file = join(path_recording, "{}_".format(gesture_num) + file_name + '.avi')
-#         path_feature_file=[]
+#         # path_feature_file=[]
 #         path_video_file=[]
 #
 #         pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)
@@ -78,7 +78,7 @@ for file_name in file_names:
         path_feature_file = join(path_features, recipe_name, '8_' + file_name + ".csv")
     if recipe_name == 'segg':
         path_feature_file = join(path_features, recipe_name, '9_' + file_name + ".csv")
-    # path_feature_file = []
+    path_feature_file = []
     path_video_file = []
 
     pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)

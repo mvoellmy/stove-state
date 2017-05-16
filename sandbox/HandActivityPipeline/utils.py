@@ -10,8 +10,6 @@ from numpy import interp
 
 def extract_features(path_features, num_gestures, label_encoder, test_file_idx, file_names):
 
-
-
     path_file_names = glob.glob(join(path_features, '*.csv'))
 
     num_files = len(path_file_names)
@@ -83,13 +81,13 @@ def spatio_temporal_features(data, labels_range, labels, num_features, label_nam
         num_frames = labels_range[i + 1] - labels_range[i]
         step = int(num_frames / N)
         idx = labels_range[i]
-        features = np.zeros((3, N))
+        features = np.zeros((2, N))
         features_x = np.zeros((N, 1))
         features_y = np.zeros((N, 1))
         for f in range(0, N):
             features[0, f] = round(interp(math.atan2(-data[idx, 2], data[idx, 3]), [-math.pi, math.pi], [0, 16]), 0)
             features[1, f] = interp(data[idx, 4], [-math.pi, math.pi], [0, 16], 0)
-            features[2, f] = math.sqrt(data[idx, 2]**2 + data[idx,3]**2)
+            # features[2, f] = math.sqrt(data[idx, 2]**2 + data[idx,3]**2)
             # features[2,f] = data[idx,0]
             # features[3,f] = data[idx,1]
             features_x[f, 0] = data[idx, 1]
@@ -97,7 +95,7 @@ def spatio_temporal_features(data, labels_range, labels, num_features, label_nam
             idx += step
         STF.append(features)
         if plot_name != []:
-            plt.subplot(2, 3, labels[i])
+            plt.subplot(2, 4, labels[i])
             plt.plot(features_x, features_y, marker='x')
             plt.title(label_names[labels[i] - 1])
     if plot_name != []:
