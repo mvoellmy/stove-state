@@ -7,6 +7,7 @@ import time
 import pickle
 
 from random import shuffle
+from math import pi
 
 # Sk learn
 from sklearn.model_selection import train_test_split
@@ -33,19 +34,21 @@ _params['feature_params'] = _feature_params
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-15-11_16_02'  # I_2 scegg and segg
+features_name = '2017-05-17-13_55_41'  # I_2 scegg and segg
 
 
-_train_model = False
+_train_model = True
 _load_features = _train_model
-_max_features = 5000
+_load_features = False
+_max_features = 750
 _test_size = 0.3
 
-_use_mse = True
+_use_mse = False
+_use_img_shuffle = True
 _use_rgb = False
 
 # Output Options
-_print_update_rate = 1000
+_print_update_rate = 100
 _plot_fails = True
 _plot_patches = False
 _locate_pan = False
@@ -66,6 +69,7 @@ features_path = polybox_path + 'pan_detect/food_features/'
 models_path = polybox_path + 'pan_detect/food_models/'
 data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
+data_path = '/Volumes/SD_128_DOS/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 
 # get classes
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
@@ -103,36 +107,44 @@ else:
 
         img_list = [f for f in os.listdir(data_path + label_name) if os.path.isfile(os.path.join(data_path + label_name, f))
                     and img_type in f]
-        print('Extracting features from {1} images of label {0}'.format(label_name, len(img_list)))
+        print('Extracting {2} features from {1} images of label {0}'.format(label_name, len(img_list), int(_max_features/len(label_types))))
 
         # Randomize img list so
-        # shuffle(img_list)
+        if _use_img_shuffle:
+            shuffle(img_list)
+
         for img_nr, img_name in enumerate(img_list):
             if nr_of_label_features >= _max_features/len(label_types):
                 print("Max number of features for class {} has been reached".format(label_name))
                 break
 
-            frame = cv2.imread(data_path + label_name + '/' + img_name, 0)
+            frame = cv2.imread(data_path + label_name + '/' + img_name)
             patch = frame[corners[plate_of_interest-1, 1]:corners[plate_of_interest-1, 3],
                           corners[plate_of_interest-1, 0]:corners[plate_of_interest-1, 2]]
 
             # Check the mean squared error between two consecutive frames
-            if img_nr == 0 or not _use_mse or mse(patch, old_patch)\
-                    > threshold:
+            if img_nr == 0 or not _use_mse or mse(patch, old_patch) > threshold:
 
-                pan_locator.find_pan(patch, _plot_ellipse=True)
+                center, axes, phi = pan_locator.find_pan(patch, _plot_ellipse=False)
+
+                mask = np.zeros_like(patch)
+                ellipse_mask = cv2.ellipse(mask, tuple(map(int, center)), tuple(map(int, axes)),
+                                           int(-phi * 180 / pi), 0, 360, (255, 255, 255), thickness=-1)
 
                 patch_normalized = histogram_equalization(patch)
 
-                feature = np.dstack(cv2.calcHist([patch], [0], None, [256], [0, 256]),
-                                    cv2.calcHist([patch], [1], None, [256], [0, 256]),
-                                    cv2.calcHist([patch], [2], None, [256], [0, 256]))
+                if _params['feature_type'] == 'RGB_HIST':
+                    feature = np.zeros((3, _feature_params['resolution']))
+
+                    for i in range(3):
+                        feature[i, :] = np.transpose(cv2.calcHist([patch], [i], ellipse_mask[:,:,0], [_feature_params['resolution']], [0, 256]))
+
+                    feature = feature.flatten()
 
                 data.append(feature)
                 labels.append(label_nr)
 
                 nr_of_label_features += 1
-
 
                 if _plot_fails:
                     patches.append(patch)
@@ -143,9 +155,9 @@ else:
                 # cv2.imshow('frame', frame)
                 cv2.waitKey(1)
 
-            if img_nr >= print_update_state:
-                print("{}/{} features extracted".format(len(labels), _max_features))
-                print("{}/{} images processed".format(img_nr, len(img_list)))
+            if img_nr + 1 >= print_update_state:
+                print("[{}/{}]\tfeatures extracted".format(len(labels), _max_features))
+                print("[{}/{}]\timages processed".format(img_nr + 1, len(img_list)))
                 print_update_state = print_update_state + _print_update_rate
 
             old_patch = patch
@@ -172,7 +184,7 @@ else:
         with open(info_name, 'w') as file:
             file.write(repr(_params))
 
-        print("Features have been saved.")
+        print("Features have been saved with name:\n{}".format(f_time_name))
 
 
 print('---------------------------')
@@ -197,12 +209,12 @@ if _train_model:
     print("Starting test dataset...")
     labels_predicted = clf.predict(test_data)
     _model_info = {'accuracy': (labels_predicted == test_labels).mean(),
-                     'best_params': clf.best_params_,
-                     'test_size': _test_size}
+                   'best_params': clf.best_params_,
+                   'test_size': _test_size}
 
     _params['model_params'] = _model_info
 
-    print("Test Accuracy {}".format(_model_info['model_accuracy']))
+    print("Test Accuracy {}".format(_model_info['accuracy']))
 
     if input('Save model? [y/n]\n').lower() == 'y':
         _params['model_params']['notes'] = str(input('Notes about model:\n'))
@@ -216,10 +228,11 @@ if _train_model:
         with open(info_name, 'w') as file:
             file.write(repr(_params))
 
-        print("Model has been saved.")
+        print("Model has been saved with name: \n{}".format(m_time_name))
 
     if _plot_fails:
         for i, image in enumerate(test_data):
             if labels_predicted[i] != test_labels[i]:
-                cv2.imshow('{} Predicted: {} Truth: {}'.format(i, labels_predicted[i], test_labels[i]), patches[i])
+
+                cv2.imshow('{} Predicted: {} Truth: {}'.format(i, label_types[labels_predicted[i]], label_types[test_labels[i]]), patches[i])
                 cv2.waitKey(0)

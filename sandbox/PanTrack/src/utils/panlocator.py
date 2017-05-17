@@ -53,8 +53,8 @@ class PanLocator:
         elif self._ellipse_smoothing == 'VOTE':
 
             patch_size = patch.shape
-            self.accu_center[0, int(raw_center[0] / patch_size[0] * self.res_center)] += 1
-            self.accu_center[1, int(raw_center[1] / patch_size[1] * self.res_center)] += 1
+            self.accu_center[0, np.min([self.res_center - 1, int(raw_center[0] / patch_size[0] * self.res_center)])] += 1
+            self.accu_center[1, np.min([self.res_center - 1, int(raw_center[1] / patch_size[1] * self.res_center)])] += 1
             self.accu_axes[0, np.min([self.res_center - 1, int(raw_axes[0] / (patch_size[0]) * self.res_center)])] += 1
             self.accu_axes[1, np.min([self.res_center - 1, int(raw_axes[1] / (patch_size[1]) * self.res_center)])] += 1
             self.accu_phi[0, int(raw_phi/pi*self.res_phi)] += 1
