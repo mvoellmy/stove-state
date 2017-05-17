@@ -383,6 +383,9 @@ class PanLocator:
                     plt.scatter(pixelpoints[:, 1], pixelpoints[:, 0])
                     plt.pause(1)
 
+        else:
+            print('ERROR: Wrong Ellipse Method!!')
+
         if _plot_ellipse:
             # plt.scatter(y, x,color='green', s=1, zorder=2)
             plt.scatter(yy, xx, color='red', s=1, zorder=3)
@@ -390,4 +393,4 @@ class PanLocator:
 
         plt.show()
 
-        return center_max,axes_max, phi_max, x_max, y_max
+        return center_max, axes_max, phi_max, x_max, y_max

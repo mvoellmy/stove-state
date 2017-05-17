@@ -18,7 +18,7 @@ from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
 _feature_params = {'orientations':      6,
-                   'pixels_per_cell':   (16, 16),
+                   'pixels_per_cell':   (12, 12),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
@@ -78,7 +78,7 @@ patches = []
 print_update_state = _print_update_rate
 
 # initialize Ellipse fitter
-pan_locator = PanLocator()
+pan_locator = PanLocator(_ellipse_method='CONVEX', _ellipse_smoothing='RAW')
 
 # Build or load Features
 if _load_features:
@@ -143,7 +143,7 @@ else:
                 patch_title = 'Label: ' + label_name
                 cv2.imshow(patch_title, patch)
                 # cv2.imshow('frame', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(0)
 
             if img_nr >= print_update_state:
                 print("{}/{} features extracted".format(len(labels), _max_features))

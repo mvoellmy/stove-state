@@ -48,9 +48,10 @@ _use_img_shuffle = True
 _use_rgb = False
 
 # Output Options
+_plot_patches = True
+_plot_ellipse = True
 _print_update_rate = 100
 _plot_fails = True
-_plot_patches = False
 _locate_pan = False
 
 # Read Config data
@@ -81,7 +82,7 @@ patches = []
 print_update_state = _print_update_rate
 
 # initialize Ellipse fitter
-pan_locator = PanLocator()
+pan_locator = PanLocator(_ellipse_method='CONVEX', _ellipse_smoothing='RAW')
 
 # Build or load Features
 if _load_features:
@@ -141,6 +142,12 @@ else:
 
                     feature = feature.flatten()
 
+                if _plot_ellipse:
+                    plot_patch = cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
+                                             int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=2)
+                else:
+                    plot_patch = patch
+
                 data.append(feature)
                 labels.append(label_nr)
 
@@ -151,9 +158,9 @@ else:
 
             if _plot_patches:
                 patch_title = 'Label: ' + label_name
-                cv2.imshow(patch_title, patch)
+                cv2.imshow(patch_title, plot_patch)
                 # cv2.imshow('frame', frame)
-                cv2.waitKey(1)
+                cv2.waitKey(0)
 
             if img_nr + 1 >= print_update_state:
                 print("[{}/{}]\tfeatures extracted".format(len(labels), _max_features))
