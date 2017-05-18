@@ -22,11 +22,11 @@ gesture_rec = GestureRecognizer()
 # Options
 _start_frame = 200
 _end_frame = -1
-_frame_rate = 1  # Only process every 'n'th frame
+_frame_rate = 100  # Only process every 'n'th frame
 
 frame_id = 0
-food_rec_time = 50
-curr_food_rec_time = int(food_rec_time/_frame_rate)
+food_rec_time = -1
+curr_food_rec_time = math.floor(food_rec_time/_frame_rate)
 
 while cap.isOpened():
 
@@ -49,7 +49,7 @@ while cap.isOpened():
         print('Gesture:\t{}'.format(gesture))
 
     # if True:
-    if curr_food_rec_time > 0:
+    if curr_food_rec_time != 0:
         curr_food_rec_time -= _frame_rate
 
         # Recognize Food
