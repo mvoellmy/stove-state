@@ -26,7 +26,7 @@ class Recognition:
         self._segment = False
 
         # Read config
-        self.cfg_path = '../../../cfg/class_cfg.txt'
+        self.cfg_path = '../cfg/class_cfg.txt'
         self.config = configparser.ConfigParser()
         self.config.read(self.cfg_path)
 
@@ -39,7 +39,7 @@ class Recognition:
         self.pan_model_name = '2017-04-27-15_19_51'  # I_begg1
         self.pan_model_name = '2017-05-17-23_54_57'  # I_2 segg/scegg
 
-        self.food_model_name = '2017-05-17-22_13_11'
+        self.food_model_name = '2017-05-18-14_19_44'
 
         # Load pan detect model
         self.pan_model = pickle.load(open(self.pan_models_path + 'M_' + self.pan_model_name + '.sav', 'rb'))
@@ -76,6 +76,8 @@ class Recognition:
         self.phi = []
 
     def process_frame(self, frame):
+
+        food_label_predicted_name = []
 
         patch = frame[self.corners[self.plate_of_interest - 1, 1]:self.corners[self.plate_of_interest - 1, 3],
                       self.corners[self.plate_of_interest - 1, 0]:self.corners[self.plate_of_interest - 1, 2]]

@@ -22,7 +22,7 @@ _ellipse_method = 'CONVEX'
 _segment = False
 
 _start_frame = 900
-_frame_rate = 50
+_frame_rate = 1000
 
 # Read config
 cfg_path = '../../../cfg/class_cfg.txt'
@@ -49,7 +49,7 @@ pan_model_name = '2017-05-11-16_44_38'
 pan_model_name = '2017-04-27-15_19_51'  # I_begg1
 pan_model_name = '2017-05-17-23_54_57'  # I_2 segg/scegg
 
-food_model_name = '2017-05-17-22_13_11'
+food_model_name = '2017-05-18-14_19_44'
 
 # Load pan detect model
 pan_model = pickle.load(open(pan_models_path + 'M_' + pan_model_name + '.sav', 'rb'))
@@ -87,14 +87,14 @@ frame_id = 0
 _end_frame = int(cap.get(7))
 
 # for image in images
-while True:
+while cap.isOpened():
 
     ret, frame = cap.read()
     frame_id += 1
 
     if frame_id < _start_frame or (frame_id % _frame_rate != 0):
         continue
-    elif frame_id - _start_frame > _end_frame:
+    elif frame_id + _start_frame > _end_frame:
         break
 
     # Todo: put preprocessing function here:
@@ -165,6 +165,7 @@ while True:
     cv2.imshow('predicted', plot_patch)
     cv2.waitKey(1)
 
+print('Program finished successfully')
 
 # plt.subplot(321), plt.hist(accu_center[0, :],normed=1, facecolor='green', alpha=0.75)
 # plt.title('Center Voting'), plt.xticks([]), plt.yticks([])
