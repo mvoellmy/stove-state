@@ -54,8 +54,8 @@ while cap.isOpened():
         # Recognize Food
         pan_label_name, food_label_name = food_rec.process_frame(frame)
 
-        # if 'pan' in pan_label_name:
-        if True:
+        if 'pan' in pan_label_name:
+        # if True:
             center, axes, phi = food_rec.get_pan_location()
             cv2.ellipse(frame, tuple(map(int, center)), tuple(map(int, axes)),
                         int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)

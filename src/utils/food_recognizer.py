@@ -66,7 +66,7 @@ class FoodRecognizer:
         self.plate_of_interest = int(self._pan_params['plate_of_interest'])
 
         # import images or videos or video stream
-        self.fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+        # self.fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 
         # init pan_locator
         self.pan_locator = PanLocator(_ellipse_smoothing=self._ellipse_smoothing, _ellipse_method=self._ellipse_method)
@@ -94,8 +94,8 @@ class FoodRecognizer:
         pan_label_predicted_id = self.pan_model.predict(pan_feature)
         pan_label_predicted_name = self._pan_params['labels'][int(pan_label_predicted_id)]
 
-        # if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
-        if True:
+        if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
+        # if True:
 
             self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
 
@@ -144,10 +144,10 @@ class FoodRecognizer:
         else:
             plot_patch = patch
 
-        cv2.putText(plot_patch, str(pan_label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
-        cv2.putText(plot_patch, str(food_label_predicted_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
-        cv2.imshow('predicted', plot_patch)
-        cv2.waitKey(1)
+        # cv2.putText(plot_patch, str(pan_label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        # cv2.putText(plot_patch, str(food_label_predicted_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        # cv2.imshow('predicted', plot_patch)
+        # cv2.waitKey(1)
 
         return pan_label_predicted_name, food_label_predicted_name
 
