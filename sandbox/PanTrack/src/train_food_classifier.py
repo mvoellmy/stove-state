@@ -27,19 +27,19 @@ _params = {'stove_type':        'I',
 
 if _params['feature_type'] == 'RGB_HIST':
     # RGB Histogram Params
-    _feature_params = {'resolution': 30}
+    _feature_params = {'resolution': 50}
 
 _params['feature_params'] = _feature_params
 
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-17-22_12_21'  # I_2 scegg and segg
+features_name = '2017-05-18-14_16_08'  # I_2 scegg and segg
 
 
 _train_model = True
 _load_features = _train_model
-_max_features = 2000
+_max_features = 5000
 _test_size = 0.3
 
 _use_mse = False

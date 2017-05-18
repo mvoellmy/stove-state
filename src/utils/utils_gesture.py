@@ -52,7 +52,7 @@ def connected_components(segmented):
     centroid = np.asarray(np.flip(centroids[idx_max],0))
 
     # Discard everything if the area is not big enough
-    threshold_area = 7000
+    threshold_area = 20000
     validation = True
     if max_area < threshold_area:
         validation = False
