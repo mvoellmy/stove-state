@@ -22,4 +22,7 @@ sandbox/PanTrack/__pycache__/
 sandbox/PanTrack/models/
 sandbox/PanTrack/src/__pycache__/
 sandbox/pokedex-find-screen-part-1/pyimagesearch/__pycache__/
+
+# Configuration File
 /cfg/class_cfg.txt
+/cfg/cfg.txt

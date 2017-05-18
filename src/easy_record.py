@@ -9,6 +9,7 @@ config.read('../cfg/cfg.txt')
 
 path_videos = config.get('paths', 'videos')
 path_labels = config.get('paths', 'labels')
+stove_type = config.get('misc', 'stove_type')
 
 
 class InputThread(threading.Thread):
@@ -22,9 +23,9 @@ class InputThread(threading.Thread):
         self.list = []
 
         # Init labels file
-        self.path_label_file = path_labels + time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(self.t_start)) + rec_name + '.csv'
+        self.path_label_file = path_labels + stove_type + time.strftime("_%Y-%m-%d-%H_%M_%S_", time.gmtime(self.t_start)) + rec_name + '.csv'
         self.label_file = open(self.path_label_file, "w")
-        self.label_file.write("Timestamp, PlateNr, Content, Start/End [1/0]\n")
+        self.label_file.write("Timestamp PlateNr Content Start/End[1/0]\n")
 
     def run(self):
         # Loop waiting for labels or commands to be input
@@ -39,10 +40,12 @@ class InputThread(threading.Thread):
         """ Manages what happens with the input. Checks for 'stop' command and otherwise writes the input into the
         labeling file.
         """
+
+        t_delta = time.time() - self.t_start
         if 'stop' in self.list:
             self.stop_flag = True
+            self.label_file.write("{:.2f} stop".format(t_delta, self.list[0]))         
         elif self.list:
-            t_delta = time.time() - self.t_start
             self.label_file.write("{:.2f} {} \n".format(t_delta, self.list[0]))
             # self.label_file.write("{}".format(t_delta))
 
@@ -55,22 +58,44 @@ def record(t_start, rec_name):
     # Starting Input Thread
     input_thread = InputThread(t_start, path_labels, rec_name)
     input_thread.start()
+  
+    print("Type 'stop' to save the recording...\n")
 
-    print("Type 'stop' to save the recording...")
-    print("Labeling: PlateNr Content Start/End [1/0]")
+    print("Labeling columns:")
+    print("PlateNr Content Start/End[1/0]")
+    print("------------------------------")
     while input_thread.is_alive():
         camera.wait_recording()
 
 
+
+print("          __          ")
+print(" ________/__\________ ")
+print("/____________________\\")
+print("|                    |")
+print("|   WELCOME TO THE   |")
+print("| COOKOMAT 3 MILLION |")
+print("|                    |")
+print("|____________________|\n")
+print("######################")
+print("Golden Recording Rules")
+print("- only pans on stove (no lids, plates, etc.)")
+print("- only short sleeved, non skin coloured shirt")
+print("- always use the same tools, pans, lids")
+print("- only cook alone")
+print("######################")
+
 # Main Loop
 while True:
+      
     rec_name = input("Enter filename or simply press enter to start recording: ")
 
     with picamera.PiCamera() as camera:
-            camera.resolution = (1640, 1232)  # full FOV
+            camera.resolution = (1640, 1232) # full FOV
+            camera.framerate = 25
             
             t_start = time.time()
-            file_name = time.strftime("%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'
+            file_name = stove_type + time.strftime("_%Y-%m-%d-%H_%M_%S_", time.gmtime(t_start)) + rec_name + '.h264'
             path_video = path_videos + file_name
 
             camera.start_recording(path_video)
