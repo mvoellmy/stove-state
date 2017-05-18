@@ -10,7 +10,7 @@ from helpers import histogram_equalization, points_to_line, get_max_clique
 
 class PanLocator:
 
-    def __init__(self, _ellipse_smoothing='VOTE', _ellipse_method='CONVEX', _plot_ellipse=True):
+    def __init__(self, _ellipse_smoothing='VOTE', _ellipse_method='CONVEX', _plot_ellipse=False):
         self._ellipse_smoothing = _ellipse_smoothing
         self._ellipse_method = _ellipse_method
         self._plot_ellipse = _plot_ellipse
@@ -358,7 +358,7 @@ class PanLocator:
                 axes = ellipse_axis_length(a)
 
                 # todo define better criterion than ellipse size
-                if max_axes < axes[0] + axes[1]:
+                if max_axes < (abs(axes[0]) + abs(axes[1])):
                     max_axes = axes[0] + axes[1]
 
                     if phi > 3.1415 / 2:

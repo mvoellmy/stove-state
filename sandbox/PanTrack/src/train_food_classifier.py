@@ -27,31 +27,29 @@ _params = {'stove_type':        'I',
 
 if _params['feature_type'] == 'RGB_HIST':
     # RGB Histogram Params
-    _feature_params = {'resolution': 20}
+    _feature_params = {'resolution': 30}
 
 _params['feature_params'] = _feature_params
 
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-17-13_55_41'  # I_2 scegg and segg
+features_name = '2017-05-17-22_12_21'  # I_2 scegg and segg
 
 
 _train_model = True
 _load_features = _train_model
-_load_features = False
-_max_features = 750
+_max_features = 2000
 _test_size = 0.3
 
 _use_mse = False
 _use_img_shuffle = True
-_use_rgb = False
 
 # Output Options
-_plot_patches = True
+_plot_patches = False
 _plot_ellipse = True
 _print_update_rate = 100
-_plot_fails = True
+_plot_fails = False
 _locate_pan = False
 
 # Read Config data
@@ -160,7 +158,7 @@ else:
                 patch_title = 'Label: ' + label_name
                 cv2.imshow(patch_title, plot_patch)
                 # cv2.imshow('frame', frame)
-                cv2.waitKey(0)
+                cv2.waitKey(1)
 
             if img_nr + 1 >= print_update_state:
                 print("[{}/{}]\tfeatures extracted".format(len(labels), _max_features))

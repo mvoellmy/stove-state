@@ -18,7 +18,7 @@ from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
 _feature_params = {'orientations':      6,
-                   'pixels_per_cell':   (12, 12),
+                   'pixels_per_cell':   (16, 16),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
@@ -34,12 +34,12 @@ _params = {'stove_type':        'I',
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-11-15_52_55'  # I_4 begg
-features_name = '2017-05-15-11_16_02'  # I_2 scegg and segg
+features_name = '2017-05-17-23_22_43'  # I_2 scegg and segg
 
 
-_train_model = False
+_train_model = True
 _load_features = _train_model
-_max_features = 5000
+_max_features = 3000
 _test_size = 0.3
 
 _use_mse = True
@@ -104,7 +104,7 @@ else:
 
         img_list = [f for f in os.listdir(data_path + label_name) if os.path.isfile(os.path.join(data_path + label_name, f))
                     and img_type in f]
-        print('Extracting features from {1} images of label {0}'.format(label_name, len(img_list)))
+        print('Extracting {2} features from {1} images of label {0}'.format(label_name, len(img_list), int(_max_features/len(label_types))))
 
         # Randomize img list so
         # shuffle(img_list)
@@ -174,7 +174,7 @@ else:
         with open(info_name, 'w') as file:
             file.write(repr(_params))
 
-        print("Features have been saved.")
+        print("Features have been saved with name:\n{}".format(f_time_name))
 
 
 print('---------------------------')
@@ -182,8 +182,9 @@ if _train_model:
     train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
-        {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        {'kernel': ['linear'], 'C': [1, 50, 100]},
+        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        # {'kernel': ['linear'], 'C': [1, 50, 100]},
+        {'kernel': ['linear'], 'C': [1]},
         # {'kernel': ['poly'], 'degree': [2]}
     ]
 
@@ -204,7 +205,7 @@ if _train_model:
 
     _params['model_params'] = _model_info
 
-    print("Test Accuracy {}".format(_model_info['model_accuracy']))
+    print("Test Accuracy {}".format(_model_info['accuracy']))
 
     if input('Save model? [y/n]\n').lower() == 'y':
         _params['model_params']['notes'] = str(input('Notes about model:\n'))
@@ -218,7 +219,7 @@ if _train_model:
         with open(info_name, 'w') as file:
             file.write(repr(_params))
 
-        print("Model has been saved.")
+        print("Model has been saved with name: \n{}".format(m_time_name))
 
     if _plot_fails:
         for i, image in enumerate(test_data):

@@ -47,9 +47,9 @@ video_path = os.path.join(polybox_path, 'pan_detect', 'test_videos', video_name)
 
 pan_model_name = '2017-05-11-16_44_38'
 pan_model_name = '2017-04-27-15_19_51'  # I_begg1
-pan_model_name = '2017-05-15-15_27_09'  # I_2 segg/scegg
+pan_model_name = '2017-05-17-23_54_57'  # I_2 segg/scegg
 
-food_model_name = '2017-05-17-15_11_09'
+food_model_name = '2017-05-17-22_13_11'
 
 # Load pan detect model
 pan_model = pickle.load(open(pan_models_path + 'M_' + pan_model_name + '.sav', 'rb'))
@@ -84,7 +84,6 @@ fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 pan_locator = PanLocator(_ellipse_smoothing=_ellipse_smoothing, _ellipse_method=_ellipse_method)
 
 frame_id = 0
-ellips_counter = 0
 _end_frame = int(cap.get(7))
 
 
