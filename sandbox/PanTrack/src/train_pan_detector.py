@@ -17,8 +17,8 @@ from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
-_feature_params = {'orientations':      6,
-                   'pixels_per_cell':   (16, 16),
+_feature_params = {'orientations':      4,
+                   'pixels_per_cell':   (12, 12),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
@@ -34,7 +34,7 @@ _params = {'stove_type':        'I',
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-11-15_52_55'  # I_4 begg
-features_name = '2017-05-17-23_22_43'  # I_2 scegg and segg
+features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
 
 
 _train_model = True

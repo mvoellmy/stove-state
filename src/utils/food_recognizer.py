@@ -37,7 +37,7 @@ class FoodRecognizer:
 
         self.pan_model_name = '2017-05-11-16_44_38'
         self.pan_model_name = '2017-04-27-15_19_51'  # I_begg1
-        self.pan_model_name = '2017-05-17-23_54_57'  # I_2 segg/scegg
+        self.pan_model_name = '2017-05-18-17_03_24'  # I_2 segg/scegg
 
         self.food_model_name = '2017-05-18-14_19_44'
 
