@@ -19,6 +19,28 @@ def segmentation_RGB(frame):
     segmented = (segmented_inv == np.zeros(segmented_inv.shape))*255
     return segmented.astype(np.uint8)
 
+def segmentation_YCC(frame):
+    # http://stackoverflow.com/questions/14752006/computer-vision-masking-a-human-hand
+    imgYCC = cv2.cvtColor(frame, cv2.COLOR_BGR2YCR_CB)
+    Y = imgYCC[:, :, 0]
+    Cr = imgYCC[:, :, 1]
+    Cb = imgYCC[:, :, 2]
+    skin_ycrcb_mint = np.array((0, 150, 0))
+    skin_ycrcb_maxt = np.array((255, 255, 255))
+    skin_ycrcb = cv2.inRange(imgYCC, skin_ycrcb_mint, skin_ycrcb_maxt)
+
+    return skin_ycrcb
+
+def segmentation_HSV(frame):
+    # http://stackoverflow.com/questions/14752006/computer-vision-masking-a-human-hand
+    skin_min = np.array([0, 0, 120], np.uint8)
+    skin_max = np.array([20, 255, 255], np.uint8)
+    gaussian_blur = cv2.GaussianBlur(frame, (5, 5), 0)
+    blur_hsv = cv2.cvtColor(gaussian_blur, cv2.COLOR_BGR2HSV)
+    segmented = cv2.inRange(blur_hsv, skin_min, skin_max)
+
+    return segmented
+
 def connected_components(segmented):
     ret, labels, stats, centroids = cv2.connectedComponentsWithStats(segmented)
 
@@ -54,9 +76,11 @@ def PCA_direction(segmented_CC, centroid):
     sort_indices = np.argsort(evals)[::-1]
     evec1, evec2 = evecs[:, sort_indices]
     x_v1, y_v1 = evec1  # Eigenvector with largest eigenvalue
-    x_v2, y_v2 = evec2
-    if y_v1 > 0:        # staehlii: cheat to avoid orientation jumping around
-        y_v1 *= -1
+    y_v2, x_v2 = evec2
+
+    if abs(x_v1) > abs(y_v1) and np.sign(x_v1) == 1: # staehlii: cheat to avoid orientation jumping around
+        y_v1 = - y_v1
+
     scale = 100
     x1 = int(x_v1*-scale + centroid[1])
     x2 = int(x_v1*scale + centroid[1])
@@ -67,10 +91,10 @@ def PCA_direction(segmented_CC, centroid):
 ######################################################################################
 
 def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
-    ret, background = cap_video.read()
-    background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
-    background_segmented = segmentation_RGB(background)
-    background_final, centroid, validation = connected_components(background_segmented)
+    # ret, background = cap_video.read()
+    # background = cv2.resize(background, (0, 0), fx=0.5, fy=0.5)
+    # background_segmented = segmentation_RGB(background)
+    # background_final, centroid, validation = connected_components(background_segmented)
 
     centroid_old = [] #np.array([0,0])
     centroid_vel = np.array([0,0],dtype=np.float)
@@ -81,6 +105,8 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
     hand_in_frame = []
     gesture_history = 0
     condition = False
+    bMHI = []
+    MH_length = 10
     while (cap.isOpened()):
         ret, frame = cap.read()
 
@@ -90,8 +116,8 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
         dim = frame.shape
 
         # Color Segmentation --------------------------------------------
-        segmented = segmentation_RGB(frame)
-        segmented_sub = segmented - background_final
+        segmented = segmentation_YCC(frame)
+        # segmented_sub = segmented - background_final
 
         # Connected Components -----------------------------------------
         segmented_final, centroid, validation = connected_components(segmented)
@@ -141,9 +167,27 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
             gesture_num = gesture_history
         # frame = cv2.putText(frame, gestures[gesture_num], (50, 100), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 0), 5)
 
+        # Binary Motion History Image (bMHI)
+        # if bMHI == []:
+        #     bMHI = [segmented_final/255]
+        # else:
+        #     bMHI.append(segmented_final/255)
+        #     if len(bMHI) > MH_length:
+        #         bMHI.pop(0)
+        #         final_bHMI = bMHI[-1]*(MH_length+1)
+        #         for i in range(0,MH_length-1):
+        #             final_bHMI += bMHI[i]*(i+1)
+        #         final_bHMI *= 255/np.max(final_bHMI)
+        #         final_bHMI = final_bHMI.astype(np.uint8)
+        #
+        #         cv2.namedWindow("bMHI", cv2.WINDOW_NORMAL)
+        #         cv2.imshow("bMHI", final_bHMI)
+        #         cv2.resizeWindow("bMHI", int(dim[1] / 2), int(dim[0] / 2))
+
+
         # Display Images -----------------------------------------------------------
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
-        cv2.imshow("Frame", frame)
+        cv2.imshow("Frame", segmented)
         cv2.resizeWindow("Frame", int(dim[1]/2), int(dim[0]/2))
         cv2.namedWindow("Segmented", cv2.WINDOW_NORMAL)
         cv2.imshow("Segmented", segmented_final_color)  #segmented_final_color
