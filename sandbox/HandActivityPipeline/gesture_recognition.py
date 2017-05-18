@@ -57,9 +57,12 @@ file_names_multiple = np.array(['I_20170516_212934_multiple0',
 
 count_correct_predictions = 0
 count_predictions = 0
-for begg_val_idx in range(0,4):
-    for segg_val_idx in range(3,4):
-        for multiple_val_idx in range(0,4):
+count_distinctive_predictions = 0
+count_all_predictions = 0
+
+for begg_val_idx in range(0,1):
+    for segg_val_idx in range(0,1):
+        for multiple_val_idx in range(0,1):
             path_features = 'gesture_features/begg/'
             out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=begg_val_idx, file_names=file_names_begg)
             data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out
@@ -96,7 +99,7 @@ for begg_val_idx in range(0,4):
             fig.canvas.set_window_title('Trajectories of Training Data')
 
 
-            N = 14 # Number of Spatio Temporal Features
+            N = 12 # Number of Spatio Temporal Features
             STF_train = spatio_temporal_features(data_train, labels_range_train, labels_train, N, label_names, 'Keyframes of Training Data')
             STF_test = spatio_temporal_features(data_test, labels_range_test, labels_test, N, label_names)
 
@@ -126,15 +129,16 @@ for begg_val_idx in range(0,4):
             predictions = np.zeros((len(label_names), len(labels_test)), dtype=np.int)
             idx_gesture_to_plot = 4
             gesture_to_plot = np.zeros((len(label_names), N))
+            clfs = []
             for i in range(0,N):
                 # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
-                clf = svm.SVC()
+                clfs.append(svm.SVC())
                 # clf = RandomForestClassifier(n_estimators=100)
                 # clf.fit(STF_train[:,i].reshape(-1,1), labels_train)
                 a = STF_train[:,:,i]
-                clf.fit(STF_train[:,:,i], labels_train)
+                clfs[i].fit(STF_train[:,:,i], labels_train)
                 # predicted_labels = clf.predict(STF_test[:,i].reshape(-1,1))
-                predicted_labels = clf.predict(STF_test[:,:,i])
+                predicted_labels = clfs[i].predict(STF_test[:,:,i])
                 predictions[np.array(predicted_labels)-1, np.array(range(0,len(labels_test)))] += 1
                 gesture_to_plot[:,i] =  predictions[:,idx_gesture_to_plot]
                 counter += (labels_test == predicted_labels) * 1
@@ -157,10 +161,17 @@ for begg_val_idx in range(0,4):
             threshold = (predictions_1st - predictions_2nd) > 0.1
             print(threshold)
             final_predictions = sorted_labels[0,:] + 1
+
+
             final_predictions = final_predictions[threshold]
             labels_test = labels_test[threshold]
+            count_distinctive_predictions += len(final_predictions)
+            num_all_predictions = len(threshold)
+            count_all_predictions += num_all_predictions
+
             num_correct_predictions = ((final_predictions == labels_test)*1).sum()
             num_predictions = len(labels_test)
+
 
             print("Final Predictions")
             print(final_predictions)
@@ -168,14 +179,14 @@ for begg_val_idx in range(0,4):
             print("Actual Labels")
             print(labels_test)
             print("Accuracy")
-            print(num_correct_predictions/num_predictions)
+            print("{:.2f}% of {:.2f}% samples".format(num_correct_predictions/num_predictions*100, len(final_predictions)/num_all_predictions*100))
             print("begg: {}, multiple: {}".format(begg_val_idx, multiple_val_idx))
 
             count_correct_predictions += num_correct_predictions
             count_predictions += num_predictions
 
 print("Total Accuracy")
-print(count_correct_predictions/count_predictions)
+print("{:.2f}% of {:.2f}% samples".format(count_correct_predictions/count_predictions*100, count_distinctive_predictions/count_all_predictions*100))
 
 # print(predictions.transpose())
 
