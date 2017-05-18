@@ -1,0 +1,7 @@
+orientations,4
+pixels_per_cell,"(16, 16)"
+cells_per_block,"(4, 4)"
+widthPadding,10
+nr_features,32
+stove_type,I_test
+labels,"['pan1', 'plate']"
