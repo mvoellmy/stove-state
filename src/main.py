@@ -3,7 +3,8 @@ import configparser
 
 # Own Libraries
 from utils_gesture import *
-from recognition import *
+from food_recognizer import *
+from gesture_recognizer import *
 
 config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
@@ -13,14 +14,17 @@ path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
 path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
 cap = cv2.VideoCapture(path_video)
 
-recognizer = Recognition()
+food_rec = FoodRecognizer()
+gesture_rec = GestureRecognizer()
 
 # Options
 _start_frame = 0
 _end_frame = -1
-_frame_rate = 25  # Only process every 'n'th frame
+_frame_rate = 1  # Only process every 'n'th frame
 
 frame_id = 0
+food_rec_time = 50
+curr_food_rec_time = int(food_rec_time/_frame_rate)
 
 while cap.isOpened():
 
@@ -28,19 +32,45 @@ while cap.isOpened():
 
     # Read an process frame
     ret, frame = cap.read()
+    print(frame_id)
 
     if frame_id < _start_frame or (frame_id % _frame_rate != 0):
-        print(frame_id)
         continue
     elif frame_id + _start_frame > _end_frame > -1:
         break
 
-    pan_label_name, food_label_name = recognizer.process_frame(frame)
+    # Recognize Gesture
+    gesture = gesture_rec.process_frame(frame)
+    print(gesture)
 
-    if 'pan' in pan_label_name:
-        center, axes, phi = recognizer.get_pan_location()
+    # if not gesture:
+    if gesture != []:
+        curr_food_rec_time = int(food_rec_time/_frame_rate)
+        print('Gesture:\t{}'.format(gesture))
 
+    if curr_food_rec_time > 0:
+        curr_food_rec_time -= _frame_rate
+
+        # Recognize Food
+        pan_label_name, food_label_name = food_rec.process_frame(frame)
+
+        # if 'pan' in pan_label_name:
+        if True:
+            center, axes, phi = food_rec.get_pan_location()
+            cv2.ellipse(frame, tuple(map(int, center)), tuple(map(int, axes)),
+                        int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)
+
+        # Output Results
+        print('Pan_label:\t{}\nFood_label:\t{}'.format(pan_label_name, food_label_name))
+        cv2.putText(frame, str(pan_label_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        cv2.putText(frame, str(food_label_name), (0, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        cv2.putText(frame, str(gesture), (0, 600), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 100, 255))
+
+
+    cv2.namedWindow("Frame", 2)
+    # cv2.resizeWindow("Frame", 640, 480)
     cv2.imshow("Frame", frame)
+
     k = cv2.waitKey(1)
     if k == 27:  # Exit by pressing escape-key
         break

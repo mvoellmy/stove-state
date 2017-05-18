@@ -11,7 +11,7 @@ from panlocator import PanLocator
 from helpers import *
 
 
-class Recognition:
+class FoodRecognizer:
 
     def __init__(self):
         # Params
@@ -72,6 +72,7 @@ class Recognition:
         self.pan_locator = PanLocator(_ellipse_smoothing=self._ellipse_smoothing, _ellipse_method=self._ellipse_method)
 
         self.center = []
+        self.global_center = []
         self.axes = []
         self.phi = []
 
@@ -79,8 +80,8 @@ class Recognition:
 
         food_label_predicted_name = []
 
-        patch = frame[self.corners[self.plate_of_interest - 1, 1]:self.corners[self.plate_of_interest - 1, 3],
-                      self.corners[self.plate_of_interest - 1, 0]:self.corners[self.plate_of_interest - 1, 2]]
+        patch = np.copy(frame[self.corners[self.plate_of_interest - 1, 1]:self.corners[self.plate_of_interest - 1, 3],
+                      self.corners[self.plate_of_interest - 1, 0]:self.corners[self.plate_of_interest - 1, 2]])
 
         patch_normalized = histogram_equalization(patch)
 
@@ -93,7 +94,8 @@ class Recognition:
         pan_label_predicted_id = self.pan_model.predict(pan_feature)
         pan_label_predicted_name = self._pan_params['labels'][int(pan_label_predicted_id)]
 
-        if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
+        # if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
+        if True:
 
             self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
 
@@ -150,4 +152,9 @@ class Recognition:
         return pan_label_predicted_name, food_label_predicted_name
 
     def get_pan_location(self):
-        return self.center, self.axes, self.phi
+
+        self.global_center = np.zeros((2,1))
+        self.global_center[0] = self.center[0] + self.corners[self.plate_of_interest - 1, 0]
+        self.global_center[1] = self.center[1] + self.corners[self.plate_of_interest - 1, 1]
+
+        return self.global_center, self.axes, self.phi
