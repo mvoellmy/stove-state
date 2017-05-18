@@ -86,7 +86,6 @@ pan_locator = PanLocator(_ellipse_smoothing=_ellipse_smoothing, _ellipse_method=
 frame_id = 0
 _end_frame = int(cap.get(7))
 
-
 # for image in images
 while True:
 
