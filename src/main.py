@@ -10,9 +10,9 @@ config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
-path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
 path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
 path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
+path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
 
 cap = cv2.VideoCapture(path_video)
 

@@ -24,7 +24,7 @@ _feature_params = {'orientations':      4,
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
-           'plate_of_interest': 2,
+           'plate_of_interest': 4,
            'feature_type':      'HOG',
            'nr_of_features':    0,
            'feature_params':    _feature_params}
@@ -35,8 +35,9 @@ img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-11-15_52_55'  # I_4 begg
 features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
+features_name = '2017-05-18-18_23_14'  # I_4 begg
 
-
+# Options
 _train_model = True
 _load_features = _train_model
 _max_features = 3000
@@ -46,8 +47,8 @@ _use_mse = True
 _use_rgb = False
 
 # Output Options
-_print_update_rate = 1000
-_plot_fails = True
+_print_update_rate = 500
+_plot_fails = False
 _plot_patches = False
 _locate_pan = False
 
@@ -200,8 +201,8 @@ if _train_model:
     print("Starting test dataset...")
     labels_predicted = clf.predict(test_data)
     _model_info = {'accuracy': (labels_predicted == test_labels).mean(),
-                     'best_params': clf.best_params_,
-                     'test_size': _test_size}
+                   'best_params': clf.best_params_,
+                   'test_size': _test_size}
 
     _params['model_params'] = _model_info
 
