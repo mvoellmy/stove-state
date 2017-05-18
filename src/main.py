@@ -33,7 +33,11 @@ while cap.isOpened():
     # Read an process frame
     ret, frame = cap.read()
 
-    recognizer.process_frame(frame)
+    pan_label_name, food_label_name = recognizer.process_frame(frame)
+
+    if 'pan' in pan_label_name:
+        center, axes, phi = recognizer.get_pan_location()
+
 
     cv2.imshow("Frame", frame)
     k = cv2.waitKey(1)

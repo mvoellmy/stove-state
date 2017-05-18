@@ -71,6 +71,10 @@ class Recognition:
         # init pan_locator
         self.pan_locator = PanLocator(_ellipse_smoothing=self._ellipse_smoothing, _ellipse_method=self._ellipse_method)
 
+        self.center = []
+        self.axes = []
+        self.phi = []
+
     def process_frame(self, frame):
 
         patch = frame[self.corners[self.plate_of_interest - 1, 1]:self.corners[self.plate_of_interest - 1, 3],
@@ -84,17 +88,17 @@ class Recognition:
                               cells_per_block=self._pan_params['feature_params']['cells_per_block'],
                               widthPadding=self._pan_params['feature_params']['widthPadding'])
 
-        label_predicted_id = self.pan_model.predict(pan_feature)
-        label_predicted_name = self._pan_params['labels'][int(label_predicted_id)]
+        pan_label_predicted_id = self.pan_model.predict(pan_feature)
+        pan_label_predicted_name = self._pan_params['labels'][int(pan_label_predicted_id)]
 
-        if 'pan' in label_predicted_name or 'lid' in label_predicted_name:
+        if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
 
-            center, axes, phi = self.pan_locator.find_pan(patch)
+            self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
 
             # Run Object Recognition inside pan
             mask = np.zeros_like(patch)
-            ellipse_mask = cv2.ellipse(mask, tuple(map(int, center)), tuple(map(int, axes)),
-                                       int(-phi * 180 / pi), 0, 360, (255, 255, 255), thickness=-1)
+            ellipse_mask = cv2.ellipse(mask, tuple(map(int, self.center)), tuple(map(int, self.axes)),
+                                       int(-self.phi * 180 / pi), 0, 360, (255, 255, 255), thickness=-1)
 
             if self._food_params['feature_type'] == 'RGB_HIST':
                 food_feature = np.zeros((3, self._food_params['feature_params']['resolution']))
@@ -118,8 +122,8 @@ class Recognition:
             #             int(-raw_phi*180/pi), 0, 360, (255, 0, 0), thickness=2)
 
             # Plot ellipse of voted ellipse
-            cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
-                        int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)
+            cv2.ellipse(patch, tuple(map(int, self.center)), tuple(map(int, self.axes)),
+                        int(-self.phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)
 
             # # masked_patch = masked_patch[]
             # if _segment:
@@ -136,8 +140,12 @@ class Recognition:
         else:
             plot_patch = patch
 
-        cv2.putText(plot_patch, str(label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        cv2.putText(plot_patch, str(pan_label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
         cv2.putText(plot_patch, str(food_label_predicted_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
         cv2.imshow('predicted', plot_patch)
         cv2.waitKey(1)
 
+        return pan_label_predicted_name, food_label_predicted_name
+
+    def get_pan_location(self):
+        return self.center, self.axes, self.phi
