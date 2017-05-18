@@ -15,10 +15,17 @@ while (cap.isOpened()):
 
     ret, frame = cap.read()
 
-    hand_in_frame = objectG.process_frame(frame)
-    print(hand_in_frame)
+    gesture = objectG.process_frame(frame)
+    print(gesture)
+    if gesture != []:
+        cv2.waitKey(0)
 
+
+
+    cv2.namedWindow("Frame",0)
+    cv2.resizeWindow("Frame", 640, 480)
     cv2.imshow("Frame", frame)
+
     k = cv2.waitKey(1)
     if k == 27:  # Exit by pressing escape-key
         break

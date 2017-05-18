@@ -7,7 +7,7 @@ class GestureRecognizer(object):
     centroid_old = []
     centroid_vel = []
     hand_in_frame = []
-    gesture_switch = []
+    old_hand_in_frame = False
 
     def __init__(self):
         pass
@@ -37,7 +37,7 @@ class GestureRecognizer(object):
 
         self.centroid_old = centroid
 
-        num_history = 10
+        num_history = 30
         if validation:
             self.hand_in_frame.append(True)
         else:
@@ -45,9 +45,16 @@ class GestureRecognizer(object):
         if len(self.hand_in_frame) > num_history:
             del self.hand_in_frame[0]
 
-        gesture = (np.array(self.hand_in_frame*1)).sum() > num_history/2
+        # gesture = (np.array(self.hand_in_frame*1)).sum() > num_history/2
+        gesture = []
+        if self.old_hand_in_frame and not all(self.hand_in_frame):
+            gesture = 'gesture'
 
+        self.old_hand_in_frame = all(self.hand_in_frame)
 
+        cv2.namedWindow("Segmentation", 0)
+        cv2.resizeWindow("Segmentation", 640, 480)
         cv2.imshow("Segmentation", segmented_final)
+
 
         return gesture
