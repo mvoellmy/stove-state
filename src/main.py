@@ -11,7 +11,8 @@ config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
 path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
-path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
+path_video = path_videos + '/I_begg/I_20170516_212934_multiple.mp4'
+# path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
 cap = cv2.VideoCapture(path_video)
 
 food_rec = FoodRecognizer()
@@ -47,6 +48,7 @@ while cap.isOpened():
     if gesture != []:
         curr_food_rec_time = int(food_rec_time/_frame_rate)
         print('Gesture:\t{}'.format(gesture))
+        cv2.waitKey(0)
 
     if curr_food_rec_time > 0:
         curr_food_rec_time -= _frame_rate

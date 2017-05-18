@@ -1,7 +1,9 @@
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
+import configparser
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
+import pickle
 from utils import *
 
 np.set_printoptions(precision=2)
@@ -129,16 +131,21 @@ for begg_val_idx in range(0,1):
             predictions = np.zeros((len(label_names), len(labels_test)), dtype=np.int)
             idx_gesture_to_plot = 4
             gesture_to_plot = np.zeros((len(label_names), N))
-            clfs = []
+
+            config = configparser.ConfigParser()
+            config.read('../../cfg/cfg_test.txt')
+            path_videos = config.get('paths', 'videos')
+            path_models = path_videos[0:-7] + '/gestures/models/'
             for i in range(0,N):
                 # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
-                clfs.append(svm.SVC())
+                clf = svm.SVC()
                 # clf = RandomForestClassifier(n_estimators=100)
                 # clf.fit(STF_train[:,i].reshape(-1,1), labels_train)
                 a = STF_train[:,:,i]
-                clfs[i].fit(STF_train[:,:,i], labels_train)
+                clf.fit(STF_train[:,:,i], labels_train)
+                pickle.dump(clf, open(path_models + 'model_STF_{}'.format(i), 'wb'))
                 # predicted_labels = clf.predict(STF_test[:,i].reshape(-1,1))
-                predicted_labels = clfs[i].predict(STF_test[:,:,i])
+                predicted_labels = clf.predict(STF_test[:,:,i])
                 predictions[np.array(predicted_labels)-1, np.array(range(0,len(labels_test)))] += 1
                 gesture_to_plot[:,i] =  predictions[:,idx_gesture_to_plot]
                 counter += (labels_test == predicted_labels) * 1

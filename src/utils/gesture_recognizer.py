@@ -1,6 +1,8 @@
 from utils_gesture import *
 import cv2
 import math
+import configparser
+import pickle
 
 class GestureRecognizer(object):
     features = []
@@ -48,7 +50,26 @@ class GestureRecognizer(object):
         # gesture = (np.array(self.hand_in_frame*1)).sum() > num_history/2
         gesture = []
         if self.old_hand_in_frame and not all(self.hand_in_frame):
-            gesture = 'gesture'
+            N = 12
+            self.features = np.array(self.features)
+            STF = extract_STF(self.features, N)
+
+            config = configparser.ConfigParser()
+            config.read('../cfg/cfg.txt')
+            path_videos = config.get('paths', 'videos')
+            path_models = path_videos[0:-7] + '/gestures/models/'
+
+            label_names = ['place pan', 'place food', 'place lid', 'remove lid', 'remove food', 'remove pan', 'season',
+                           'other']
+            predictions = np.zeros((len(label_names), 1), dtype=np.int)
+            for i in range(0,N):
+                clf = pickle.load(open(path_models + 'model_STF_{}'.format(i), 'rb'))
+                predicted_label = clf.predict(STF[:,i])
+                predictions[predicted_label - 1] += 1
+
+            best_label_idx = predictions.argmax()
+            gesture = label_names[best_label_idx]
+            self.features = []
 
         self.old_hand_in_frame = all(self.hand_in_frame)
 

@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import math
 
 def segmentation_RGB(frame):
     frame = frame.astype(int)
@@ -82,3 +83,15 @@ def PCA_direction(segmented_CC, centroid):
     y2 = int(y_v1*scale + centroid[0])
 
     return x1, y1, x2, y2
+
+def extract_STF(data, N):
+    num_frames = data.shape[0]
+    step = int(num_frames / N)
+    STF = np.zeros((2, N))
+    idx = 0
+    for f in range(0, N):
+        STF[0,f] = round(np.interp(math.atan2(-data[idx, 2], data[idx, 3]), [-math.pi, math.pi], [0, 16]), 0)
+        STF[1,f] = np.interp(data[idx, 4], [-math.pi, math.pi], [0, 16], 0)
+        idx += step
+
+    return STF
