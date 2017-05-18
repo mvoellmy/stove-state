@@ -65,8 +65,10 @@ def extract_features(path_features, num_gestures, label_encoder, test_file_idx, 
                 labels_test.append( label_encoder[label_idx] )
         file_counter += 1
     data_train = np.array(data_train, dtype=np.float)
+    labels_train = np.array(labels_train)
     labels_range_train = np.array(labels_range_train)
     data_test = np.array(data_test, dtype=np.float)
+    labels_test = np.array(labels_test)
     labels_range_test = np.array(labels_range_test)
 
     return data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test

@@ -116,7 +116,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
         dim = frame.shape
 
         # Color Segmentation --------------------------------------------
-        segmented = segmentation_RGB(frame)
+        segmented = segmentation_YCC(frame)
         # segmented_sub = segmented - background_final
 
         # Connected Components -----------------------------------------
