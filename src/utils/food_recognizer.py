@@ -20,8 +20,8 @@ class FoodRecognizer:
         self._ellipse_smoothing = 'VOTE'
 
         self._ellipse_method = 'RANSAC'
-        self._ellipse_method = 'MAX_ARC'
         self._ellipse_method = 'CONVEX'
+        self._ellipse_method = 'MAX_ARC'
 
         self._segment = False
         self._plate_of_interest = plate_of_interest
