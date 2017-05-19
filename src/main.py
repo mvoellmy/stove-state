@@ -10,14 +10,20 @@ config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
-path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
-path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/segg_short.mov'
-path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
-path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
+# Choose which stove and plate is observed
+plate_of_interest = 'I_4'
+
+if plate_of_interest == 'I_4':
+    path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
+elif plate_of_interest == 'I_2':
+    path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/segg_short.mov'
+    path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
+    path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
+    path_video = path_videos + '/I_scegg/I_20170430_213149_scegg.mp4'
 
 cap = cv2.VideoCapture(path_video)
 
-food_rec = FoodRecognizer()
+food_rec = FoodRecognizer(plate_of_interest=plate_of_interest)
 gesture_rec = GestureRecognizer()
 
 # Playback Options

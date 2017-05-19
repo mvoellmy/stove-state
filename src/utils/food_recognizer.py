@@ -13,7 +13,7 @@ from helpers import *
 
 class FoodRecognizer:
 
-    def __init__(self):
+    def __init__(self, plate_of_interest):
         # Params
         self._ellipse_smoothing = 'AVERAGE'
         self._ellipse_smoothing = 'RAW'
@@ -24,6 +24,7 @@ class FoodRecognizer:
         self._ellipse_method = 'CONVEX'
 
         self._segment = False
+        self._plate_of_interest = plate_of_interest
 
         # Read config
         self.cfg_path = '../cfg/class_cfg.txt'
@@ -36,11 +37,18 @@ class FoodRecognizer:
         self.food_models_path = self.polybox_path + 'pan_detect/food_models/'
 
         self.pan_model_name = '2017-05-11-16_44_38'
-        self.pan_model_name = '2017-05-18-17_03_24'  # I_2 segg/scegg
-        self.pan_model_name = '2017-05-18-18_25_11'  # I_4 begg1
 
-        self.food_model_name = '2017-05-18-14_19_44'
-        self.food_model_name = '2017-05-19-09_20_36' # I_4 poly
+        if self._plate_of_interest == 'I_4':
+            self.pan_model_name = '2017-05-18-18_25_11'  # I_4 begg1
+            self.food_model_name = '2017-05-19-09_20_36' # I_4 poly
+
+        elif self._plate_of_interest == 'I_2':
+            self.pan_model_name = '2017-05-18-17_03_24'  # I_2 segg/scegg
+            self.food_model_name = '2017-05-18-14_19_44'
+
+        else:
+            print('ERROR: Invalid Plate of interest')
+
 
         # Load pan detect model
         self.pan_model = pickle.load(open(self.pan_models_path + 'M_' + self.pan_model_name + '.sav', 'rb'))
