@@ -59,20 +59,24 @@ file_names_multiple = np.array(['I_20170516_212934_multiple0',
 
 count_correct_predictions = 0
 count_predictions = 0
+count_correct_predictions_all = np.zeros((len(label_names),1))
+count_predictions_all = np.zeros((len(label_names),1))
 count_distinctive_predictions = 0
 count_all_predictions = 0
 
-for begg_val_idx in range(0,1):
+for begg_val_idx in range(3,4):
     for segg_val_idx in range(0,1):
-        for multiple_val_idx in range(0,1):
+        for multiple_val_idx in range(3,4):
+            print("begg: {}, segg: {}, multiple: {}".format(begg_val_idx, segg_val_idx, multiple_val_idx))
+
             path_features = 'gesture_features/begg/'
             out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=begg_val_idx, file_names=file_names_begg)
             data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out
 
             # path_features = 'gesture_features/segg/'
             # out2 = extract_features(path_features, num_gestures=8, label_encoder=segg_labels, test_file_idx=segg_val_idx, file_names=file_names_segg)
-            # data_train2, labels_train2, labels_range_train2, data_test2, labels_test2, labels_range_test2 = out2
-            #
+            # data_train2, labels_train2, labels_range_train2, data_test, labels_test, labels_range_test = out2
+
             # data_train = np.concatenate((data_train, data_train2))
             # labels_train = np.concatenate((labels_train, labels_train2))
             # labels_range_train = np.concatenate((labels_range_train, labels_range_train2[1:] + labels_range_train[-1]))
@@ -83,6 +87,7 @@ for begg_val_idx in range(0,1):
             path_features = 'gesture_features/multiple/'
             out3 = extract_features(path_features, num_gestures=8, label_encoder=multiple_labels, test_file_idx=multiple_val_idx, file_names=file_names_multiple)
             data_train3, labels_train3, labels_range_train3, data_test3, labels_test3, labels_range_test3 = out3
+            # data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out3
 
             data_train = np.concatenate((data_train, data_train3))
             labels_train = np.concatenate((labels_train, labels_train3))
@@ -122,6 +127,7 @@ for begg_val_idx in range(0,1):
 
             plot_STF(STF_train, labels_train, 0, 'STF - Trajectory orientation')
             plot_STF(STF_train, labels_train, 1, 'STF - Hand orientation')
+            # plot_STF(STF_train, labels_train, 2, 'STF - Absolute velocity')
 
             # Train each individual keyframe separately
             predicted = []
@@ -129,7 +135,7 @@ for begg_val_idx in range(0,1):
             # print("Predict each Keyframe")
             # print("Correct predictions \t Predicted Labels")
             predictions = np.zeros((len(label_names), len(labels_test)), dtype=np.int)
-            idx_gesture_to_plot = 4
+            idx_gesture_to_plot = 3
             gesture_to_plot = np.zeros((len(label_names), N))
 
             config = configparser.ConfigParser()
@@ -138,18 +144,16 @@ for begg_val_idx in range(0,1):
             path_models = path_videos[0:-7] + '/gestures/models/'
             for i in range(0,N):
                 # clf = GridSearchCV(SVC(), parameters, cv=2, n_jobs=1)
-                clf = svm.SVC()
                 # clf = RandomForestClassifier(n_estimators=100)
-                # clf.fit(STF_train[:,i].reshape(-1,1), labels_train)
-                a = STF_train[:,:,i]
+                clf = svm.SVC()
                 clf.fit(STF_train[:,:,i], labels_train)
-                pickle.dump(clf, open(path_models + 'model_STF_{}'.format(i), 'wb'))
-                # predicted_labels = clf.predict(STF_test[:,i].reshape(-1,1))
+
+                # pickle.dump(clf, open(path_models + 'model_STF_{}'.format(i), 'wb'))
+
                 predicted_labels = clf.predict(STF_test[:,:,i])
                 predictions[np.array(predicted_labels)-1, np.array(range(0,len(labels_test)))] += 1
                 gesture_to_plot[:,i] =  predictions[:,idx_gesture_to_plot]
                 counter += (labels_test == predicted_labels) * 1
-                # print("{} \t\t\t {}".format((labels_test == predicted_labels) * 1, predicted_labels))
 
             plt.figure()
             for i in range(0,len(label_names)):
@@ -157,8 +161,8 @@ for begg_val_idx in range(0,1):
 
             plt.legend(label_names)
 
-            print("Percentage of correct guesses")
-            print(predictions[np.array(labels_test)-1, np.array(range(0,len(labels_test)))] / N)
+            # print("Percentage of correct guesses")
+            # print(predictions[np.array(labels_test)-1, np.array(range(0,len(labels_test)))] / N)
 
             print("Accumulated Labels")
             print(predictions)
@@ -166,15 +170,20 @@ for begg_val_idx in range(0,1):
             predictions_1st = predictions[sorted_labels[0,:], np.array(range(0,len(labels_test)))] / N
             predictions_2nd = predictions[sorted_labels[1,:], np.array(range(0,len(labels_test)))] / N
             threshold = (predictions_1st - predictions_2nd) > 0.1
-            print(threshold)
+            # print(threshold)
             final_predictions = sorted_labels[0,:] + 1
 
 
-            final_predictions = final_predictions[threshold]
-            labels_test = labels_test[threshold]
+            # final_predictions = final_predictions[threshold]
+            # labels_test = labels_test[threshold]
+
             count_distinctive_predictions += len(final_predictions)
             num_all_predictions = len(threshold)
             count_all_predictions += num_all_predictions
+
+            for p in range(0,len(final_predictions)):
+                count_correct_predictions_all[labels_test[p]-1] += (final_predictions[p] == labels_test[p])*1
+                count_predictions_all[labels_test[p]-1] += 1
 
             num_correct_predictions = ((final_predictions == labels_test)*1).sum()
             num_predictions = len(labels_test)
@@ -185,16 +194,16 @@ for begg_val_idx in range(0,1):
             print((final_predictions == labels_test)*1)
             print("Actual Labels")
             print(labels_test)
-            print("Accuracy")
+            print("Accuracy over all gestures")
             print("{:.2f}% of {:.2f}% samples".format(num_correct_predictions/num_predictions*100, len(final_predictions)/num_all_predictions*100))
-            print("begg: {}, multiple: {}".format(begg_val_idx, multiple_val_idx))
+            print("Accuracy for each gesture")
+            print((count_correct_predictions_all / count_predictions_all).transpose() * 100)
 
             count_correct_predictions += num_correct_predictions
             count_predictions += num_predictions
 
 print("Total Accuracy")
 print("{:.2f}% of {:.2f}% samples".format(count_correct_predictions/count_predictions*100, count_distinctive_predictions/count_all_predictions*100))
+print((count_correct_predictions_all/count_predictions_all).transpose()*100)
 
-# print(predictions.transpose())
-
-# plt.show()
+plt.show()

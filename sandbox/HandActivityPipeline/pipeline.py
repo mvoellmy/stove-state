@@ -167,7 +167,7 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
             gesture_num = gesture_history
         # frame = cv2.putText(frame, gestures[gesture_num], (50, 100), cv2.FONT_HERSHEY_DUPLEX, 3, (0, 255, 0), 5)
 
-        # Binary Motion History Image (bMHI)
+        # # Binary Motion History Image (bMHI)
         # if bMHI == []:
         #     bMHI = [segmented_final/255]
         # else:
