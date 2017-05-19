@@ -11,9 +11,10 @@ config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
 # Choose which stove and plate is observed
-plate_of_interest = 'I_2'
+plate_of_interest = 'I_4'
 
 if plate_of_interest == 'I_4':
+    path_video = path_videos + '/I_begg/I_20170516_212934_multiple.mp4'
     path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
 elif plate_of_interest == 'I_2':
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/segg_short.mov'
@@ -29,15 +30,15 @@ food_rec = FoodRecognizer(plate_of_interest=plate_of_interest)
 gesture_rec = GestureRecognizer()
 
 # Playback Options
-_start_frame = 200
+_start_frame = 350
 _end_frame = -1
-_frame_rate = 100  # Only process every 'n'th frame
+_frame_rate = 1  # Only process every 'n'th frame
 
 # Plot Options
 _plot_segmentation = True
 
 frame_id = 0
-food_rec_time = -1
+food_rec_time = 50
 curr_food_rec_time = math.floor(food_rec_time/_frame_rate)
 
 while cap.isOpened():
@@ -73,17 +74,21 @@ while cap.isOpened():
             cv2.ellipse(frame, tuple(map(int, center)), tuple(map(int, axes)),
                         int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)
 
-        # Output Results
-        cv2.putText(frame, str(pan_label_name), (0, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 5)
-        cv2.putText(frame, str(food_label_name), (0, 600), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 5)
-        cv2.putText(frame, str(gesture), (0, 800), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 100, 255), 5)
-        cv2.putText(frame, str(frame_id+_start_frame), (0, 1200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 3)
+    # Output Results
+    cv2.putText(frame, str(pan_label_name), (0, 400), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 5)
+    cv2.putText(frame, str(food_label_name), (0, 600), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 5)
+    cv2.putText(frame, str(gesture), (0, 800), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 100, 255), 5)
+    cv2.putText(frame, str(frame_id), (0, 1200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 3)
 
     cv2.namedWindow("Frame", 2)
     # cv2.resizeWindow("Frame", 640, 480)
     cv2.imshow("Frame", frame)
 
-    k = cv2.waitKey(1)
+    if gesture != []:
+        k = cv2.waitKey(2000)
+    else:
+        k = cv2.waitKey(1)
+
     if k == 27:  # Exit by pressing escape-key
         break
 
