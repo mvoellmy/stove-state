@@ -49,7 +49,6 @@ class FoodRecognizer:
         else:
             print('ERROR: Invalid Plate of interest')
 
-
         # Load pan detect model
         self.pan_model = pickle.load(open(self.pan_models_path + 'M_' + self.pan_model_name + '.sav', 'rb'))
         self.food_model = pickle.load(open(self.food_models_path + 'M_' + self.food_model_name + '.sav', 'rb'))
@@ -85,6 +84,11 @@ class FoodRecognizer:
         self.axes = []
         self.phi = []
 
+        self.food_label_predicted_name = []
+        self.food_label_predicted_id = []
+        self.pan_label_predicted_name = []
+        self.pan_label_predicted_id = []
+
     def process_frame(self, frame):
 
         food_label_predicted_name = []
@@ -100,10 +104,10 @@ class FoodRecognizer:
                               cells_per_block=self._pan_params['feature_params']['cells_per_block'],
                               widthPadding=self._pan_params['feature_params']['widthPadding'])
 
-        pan_label_predicted_id = self.pan_model.predict(pan_feature)
-        pan_label_predicted_name = self._pan_params['labels'][int(pan_label_predicted_id)]
+        self.pan_label_predicted_id = self.pan_model.predict(pan_feature)
+        self.pan_label_predicted_name = self._pan_params['labels'][int(self.pan_label_predicted_id)]
 
-        if 'pan' in pan_label_predicted_name or 'lid' in pan_label_predicted_name:
+        if 'pan' in self.pan_label_predicted_name:
         # if True:
 
             self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
@@ -123,8 +127,8 @@ class FoodRecognizer:
 
                 food_feature = food_feature.flatten()
 
-            food_label_predicted_id = self.food_model.predict(food_feature)
-            food_label_predicted_name = self._food_params['labels'][int(food_label_predicted_id)]
+            self.food_label_predicted_id = self.food_model.predict(food_feature)
+            self.food_label_predicted_name = self._food_params['labels'][int(self.food_label_predicted_id)]
 
             # Plot contures of used edges
             # for x_it, y_it in zip(x, y):
@@ -154,11 +158,11 @@ class FoodRecognizer:
             plot_patch = patch
 
         # cv2.putText(plot_patch, str(pan_label_predicted_name), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
-        # cv2.putText(plot_patch, str(food_label_predicted_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
+        # cv2.putText(plot_patch, str(self.food_label_predicted_name), (0, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0))
         # cv2.imshow('predicted', plot_patch)
         # cv2.waitKey(1)
 
-        return pan_label_predicted_name, food_label_predicted_name
+        return self.pan_label_predicted_name, self.food_label_predicted_name
 
     def get_pan_location(self):
 

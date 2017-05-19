@@ -16,6 +16,7 @@ plate_of_interest = 'I_4'
 if plate_of_interest == 'I_4':
     path_video = path_videos + '/I_begg/I_20170516_212934_multiple.mp4'
     path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
+    path_video = path_videos + '/I_begg/demo_begg.mov'
 elif plate_of_interest == 'I_2':
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/segg_short.mov'
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
@@ -30,7 +31,7 @@ food_rec = FoodRecognizer(plate_of_interest=plate_of_interest)
 gesture_rec = GestureRecognizer()
 
 # Playback Options
-_start_frame = 350
+_start_frame = 0
 _end_frame = -1
 _frame_rate = 1  # Only process every 'n'th frame
 
@@ -38,7 +39,8 @@ _frame_rate = 1  # Only process every 'n'th frame
 _plot_segmentation = True
 
 frame_id = 0
-food_rec_time = 50
+food_rec_time = -2
+food_check_interval = 25
 curr_food_rec_time = math.floor(food_rec_time/_frame_rate)
 
 while cap.isOpened():
@@ -58,7 +60,7 @@ while cap.isOpened():
 
     # if not gesture:
     if gesture != []:
-        curr_food_rec_time = int(food_rec_time/_frame_rate)
+        curr_food_rec_time = math.floor(food_rec_time/_frame_rate)
         print('Gesture:\t{}'.format(gesture))
 
     # if True:
