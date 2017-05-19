@@ -11,7 +11,7 @@ config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
 # Choose which stove and plate is observed
-plate_of_interest = 'I_4'
+plate_of_interest = 'I_2'
 
 if plate_of_interest == 'I_4':
     path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
@@ -20,6 +20,8 @@ elif plate_of_interest == 'I_2':
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
     path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
     path_video = path_videos + '/I_scegg/I_20170430_213149_scegg.mp4'
+    path_video = path_videos + '/I_segg/I_20170504_221703_segg.mp4'
+    path_video = path_videos + '/I_scegg/I_20170425_205126_scegg.mp4'  # this is gud
 
 cap = cv2.VideoCapture(path_video)
 
