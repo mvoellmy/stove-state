@@ -76,6 +76,12 @@ class PanLocator:
     def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
         plt.ion()
 
+        center_max = [0, 0]
+        axes_max = [1, 1]
+        phi_max = 1
+        x_max = 1
+        y_max = 1
+
         if histeq:
             img = histogram_equalization(img)
         if rgb:

@@ -46,8 +46,8 @@ video_name = 'scegg_test_1.mp4'
 video_path = os.path.join(polybox_path, 'pan_detect', 'test_videos', video_name)
 
 pan_model_name = '2017-05-11-16_44_38'
-pan_model_name = '2017-04-27-15_19_51'  # I_begg1
 pan_model_name = '2017-05-18-17_03_24'  # I_2 segg/scegg
+pan_model_name = '2017-04-27-15_19_51'  # I_begg1
 
 food_model_name = '2017-05-18-14_19_44'
 
