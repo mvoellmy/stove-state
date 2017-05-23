@@ -133,7 +133,6 @@ def get_max_clique(c):
 
 def plot_histogram(hist_item, index):
 
-
     # Create window to display image
     cv2.namedWindow('colorhist {}'.format(index+1), 2)
 

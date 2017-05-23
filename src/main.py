@@ -5,6 +5,7 @@ import configparser
 from utils_gesture import *
 from food_recognizer import *
 from gesture_recognizer import *
+from particle_filter import *
 
 config = configparser.ConfigParser()
 config.read('../cfg/cfg.txt')
@@ -29,6 +30,7 @@ cap = cv2.VideoCapture(path_video)
 
 food_rec = FoodRecognizer(plate_of_interest=plate_of_interest)
 gesture_rec = GestureRecognizer()
+p_filter = ParticleFilter(200)
 
 # Playback Options
 _start_frame = 0
@@ -42,6 +44,9 @@ frame_id = 0
 food_rec_time = -2
 food_check_interval = 25
 curr_food_rec_time = math.floor(food_rec_time/_frame_rate)
+
+# Variable Init
+pan_state_dist = []
 
 while cap.isOpened():
 
@@ -70,6 +75,10 @@ while cap.isOpened():
         # Recognize Food
         pan_label_name, food_label_name = food_rec.process_frame(frame)
 
+        p_filter.update_particles(gesture)
+        p_filter.update_weights(pan_label_name)
+        pan_state_dist = p_filter.count_particles()
+
         if 'pan' in pan_label_name:
         # if True:
             center, axes, phi = food_rec.get_pan_location()
@@ -81,6 +90,11 @@ while cap.isOpened():
     cv2.putText(frame, str(food_label_name), (0, 600), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 5)
     cv2.putText(frame, str(gesture), (0, 800), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 100, 255), 5)
     cv2.putText(frame, str(frame_id), (0, 1200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 3)
+    cv2.putText(frame, 'Plate: {} Pan:{} Lid:{}'.format(pan_state_dist[0],
+                                                               pan_state_dist[1],
+                                                               pan_state_dist[2]),
+                (600, 1200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+
 
     cv2.namedWindow("Frame", 2)
     # cv2.resizeWindow("Frame", 640, 480)
