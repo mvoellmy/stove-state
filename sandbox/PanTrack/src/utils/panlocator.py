@@ -53,10 +53,10 @@ class PanLocator:
         elif self._ellipse_smoothing == 'VOTE':
 
             patch_size = patch.shape
-            self.accu_center[0, np.min([self.res_center - 1, int(raw_center[0] / patch_size[0] * self.res_center)])] += 1
-            self.accu_center[1, np.min([self.res_center - 1, int(raw_center[1] / patch_size[1] * self.res_center)])] += 1
-            self.accu_axes[0, np.min([self.res_center - 1, int(raw_axes[0] / (patch_size[0]) * self.res_center)])] += 1
-            self.accu_axes[1, np.min([self.res_center - 1, int(raw_axes[1] / (patch_size[1]) * self.res_center)])] += 1
+            self.accu_center[0, np.min([self.res_center - 1, abs(int(raw_center[0] / patch_size[0] * self.res_center))])] += 1
+            self.accu_center[1, np.min([self.res_center - 1, abs(int(raw_center[1] / patch_size[1] * self.res_center))])] += 1
+            self.accu_axes[0, np.min([self.res_center - 1, abs(int(raw_axes[0] / (patch_size[0]) * self.res_center))])] += 1
+            self.accu_axes[1, np.min([self.res_center - 1, abs(int(raw_axes[1] / (patch_size[1]) * self.res_center))])] += 1
             self.accu_phi[0, int(raw_phi/pi*self.res_phi)] += 1
 
             if self.ellipse_counter < 3:
@@ -75,6 +75,12 @@ class PanLocator:
 
     def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
         plt.ion()
+
+        center_max = [0, 0]
+        axes_max = [1, 1]
+        phi_max = 1
+        x_max = 1
+        y_max = 1
 
         if histeq:
             img = histogram_equalization(img)

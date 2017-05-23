@@ -129,3 +129,39 @@ def points_to_line(pixelpoints, best_theta, best_r, _plot_tangent=False):
 def get_max_clique(c):
     G = nx.from_numpy_matrix(c)
     return list(nx.find_cliques(G))
+
+
+def plot_histogram(hist_item, index):
+
+
+    # Create window to display image
+    cv2.namedWindow('colorhist {}'.format(index+1), 2)
+
+    # Set hist parameters
+
+    hist_height = 64
+    hist_width = 256
+    nbins = 32
+    bin_width = hist_width / nbins
+
+    # Create an empty image for the histogram
+    h = np.zeros((hist_height, hist_width))
+
+    # Create array for the bins
+    bins = np.arange(nbins, dtype=np.int32).reshape(nbins, 1)
+
+    # Calculate and normalise the histogram
+    cv2.normalize(hist_item, hist_item, hist_height, cv2.NORM_MINMAX)
+    hist = np.int32(np.around(hist_item))
+    pts = np.column_stack((bins, hist))
+
+    # Loop through each bin and plot the rectangle in white
+    for x, y in enumerate(hist):
+        cv2.rectangle(h, (int(x * bin_width), y), (int(x * bin_width + bin_width - 1), hist_height), (255, 0, 0), -1)
+
+    # Flip upside down
+    h = np.flipud(h)
+
+    # Show the histogram
+    cv2.imshow('colorhist {}'.format(index+1), h)
+    cv2.waitKey(1)

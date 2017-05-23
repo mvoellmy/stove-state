@@ -16,30 +16,34 @@ from sklearn.svm import SVC
 
 # Own Libraries
 from panlocator import PanLocator
-from helpers import mse, get_HOG, histogram_equalization
+from helpers import *
 
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
-           'plate_of_interest': 2,
+           'plate_of_interest': 4,
            'feature_type':      'RGB_HIST',
            'nr_of_features':    0}
 
 if _params['feature_type'] == 'RGB_HIST':
     # RGB Histogram Params
-    _feature_params = {'resolution': 50}
+    _feature_params = {'resolution': 32}
+
+elif _params['feature_type'] == 'SIFT':
+    _feature_params = {'resolution': 32}
 
 _params['feature_params'] = _feature_params
 
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-18-14_16_08'  # I_2 scegg and segg
-
+features_name = '2017-05-19-07_34_40'  # I_2 scegg and segg #
+features_name = '2017-05-19-09_12_03'
 
 _train_model = True
 _load_features = _train_model
-_max_features = 5000
+# _load_features = False
+_max_features = 2000
 _test_size = 0.3
 
 _use_mse = False
@@ -48,6 +52,7 @@ _use_img_shuffle = True
 # Output Options
 _plot_patches = False
 _plot_ellipse = True
+_plot_hists = False
 _print_update_rate = 100
 _plot_fails = False
 _locate_pan = False
@@ -67,8 +72,10 @@ plate_of_interest = _params['plate_of_interest']
 features_path = polybox_path + 'pan_detect/food_features/'
 models_path = polybox_path + 'pan_detect/food_models/'
 data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
-data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
 data_path = '/Volumes/SD_128_DOS/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
+data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/food/'
+
+print(data_path)
 
 # get classes
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
@@ -136,9 +143,17 @@ else:
                     feature = np.zeros((3, _feature_params['resolution']))
 
                     for i in range(3):
-                        feature[i, :] = np.transpose(cv2.calcHist([patch], [i], ellipse_mask[:,:,0], [_feature_params['resolution']], [0, 256]))
+                        hist = cv2.calcHist([patch], [i], ellipse_mask[:, :, 0], [_feature_params['resolution']], [0, 256])
+                        feature[i, :] = np.transpose(hist)
+                        if _plot_hists:
+                            plot_histogram(hist, i)
 
                     feature = feature.flatten()
+
+                elif _params['feature_type'] == 'SIFT':
+
+                    surf = cv2.xfeatures2d.SURF_create(400)
+                    kp, des = surf.detectAndCompute(patch, ellipse_mask[:, :, 0])
 
                 if _plot_ellipse:
                     plot_patch = cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
@@ -197,9 +212,10 @@ if _train_model:
     train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
-        {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        {'kernel': ['linear'], 'C': [1, 50, 100]},
-        # {'kernel': ['poly'], 'degree': [2]}
+        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        # {'kernel': ['linear'], 'C': [ 50, 100]},
+        # {'kernel': ['linear'], 'C': [1]},
+        {'kernel': ['poly'], 'degree': [2]}
     ]
 
     # Grid search object with SVM classifier.

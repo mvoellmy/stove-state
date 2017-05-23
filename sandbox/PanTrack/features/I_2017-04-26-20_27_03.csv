@@ -1,7 +1,0 @@
-orientations,4
-pixels_per_cell,"(16, 16)"
-cells_per_block,"(4, 4)"
-widthPadding,10
-stove_type,I
-labels,"['pan1', 'plate']"
-nr_features,7130

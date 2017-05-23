@@ -17,14 +17,14 @@ from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
-_feature_params = {'orientations':      6,
-                   'pixels_per_cell':   (16, 16),
+_feature_params = {'orientations':      4,
+                   'pixels_per_cell':   (12, 12),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
-           'plate_of_interest': 2,
+           'plate_of_interest': 4,
            'feature_type':      'HOG',
            'nr_of_features':    0,
            'feature_params':    _feature_params}
@@ -34,9 +34,10 @@ _params = {'stove_type':        'I',
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-11-15_52_55'  # I_4 begg
-features_name = '2017-05-17-23_22_43'  # I_2 scegg and segg
+features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
+features_name = '2017-05-18-18_23_14'  # I_4 begg
 
-
+# Options
 _train_model = True
 _load_features = _train_model
 _max_features = 3000
@@ -46,8 +47,8 @@ _use_mse = True
 _use_rgb = False
 
 # Output Options
-_print_update_rate = 1000
-_plot_fails = True
+_print_update_rate = 500
+_plot_fails = False
 _plot_patches = False
 _locate_pan = False
 
@@ -66,7 +67,7 @@ plate_of_interest = _params['plate_of_interest']
 features_path = polybox_path + 'pan_detect/pan_features/'
 models_path = polybox_path + 'pan_detect/pan_models/'
 data_path = '/Users/miro/Desktop/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
-data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/'
+data_path = polybox_path + 'pan_detect/data/' + _params['stove_type'] + '_' + str(_params['plate_of_interest']) + '/pan/'
 
 # get classes
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
@@ -200,8 +201,8 @@ if _train_model:
     print("Starting test dataset...")
     labels_predicted = clf.predict(test_data)
     _model_info = {'accuracy': (labels_predicted == test_labels).mean(),
-                     'best_params': clf.best_params_,
-                     'test_size': _test_size}
+                   'best_params': clf.best_params_,
+                   'test_size': _test_size}
 
     _params['model_params'] = _model_info
 

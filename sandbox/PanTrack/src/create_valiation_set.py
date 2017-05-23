@@ -4,6 +4,7 @@ import cv2
 from helpers import mse
 
 path_data = '/Users/miro/Desktop/test_dataset/'
+path_data = '/Users/miro/Desktop/I_4/'
 path_train = path_data + 'train/'
 path_val = path_data + 'val/'
 img_type = '.jpg'
@@ -16,6 +17,7 @@ print('Parameters: \n\tDataset Path: {}\n\tImg Type: {}'.format(path_data, img_t
 print('1. Delete similar images')
 print('2. Split dataset into test and train')
 print('3. Undo split')
+print("4. Only keep every n-th frame (for path-data)")
 action = int(input('What do you want to do?\n'))
 
 if action == 1:
@@ -105,6 +107,43 @@ elif action == 3:
             moved_counter += 1
 
     print('{} images were moved from val to train.'.format(moved_counter))
+
+elif action == 4:
+    # Initialize Variables
+    removed_counter = 0
+    class_list = [f for f in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, f))]
+
+    # Check input
+    frequency = float(input('Keep every n-th image.\nn = '))
+
+    for label_nr, label_name in enumerate(class_list):
+        class_removed_counter = 0
+
+        img_list = [f for f in os.listdir(path_data + label_name)
+                    if os.path.isfile(os.path.join(path_data + label_name, f))
+                    and img_type in f]
+
+        for img_nr, img_name in enumerate(img_list):
+            # Load img
+            img = cv2.imread(path_data+label_name+'/'+img_name, 0)
+            if img_nr % frequency != 0:
+                if delete_type == 'FULL':
+                    os.remove(path_data + label_name + '/' + img_name)
+                elif delete_type == 'MOVE':
+                    os.rename(path_data + label_name + '/' + img_name, path_data + 'del/' + img_name)
+                else:
+                    print('ERROR: specify delete type!')
+
+                class_removed_counter += 1
+                removed_counter += 1
+
+            old_img = img
+
+        print('{} images deleted from {}'.format(class_removed_counter, label_name))
+
+    print('_______________________________')
+    print('{} images deleted in total'.format(removed_counter))
+
 
 else:
     print('nothing done...wrong input')
