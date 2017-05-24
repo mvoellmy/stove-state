@@ -2,6 +2,7 @@ import numpy as np
 from random import randint, random
 import math
 
+
 class ParticleFilter():
     def __init__(self, nr_of_particles=200):
         self.nr_of_particles = nr_of_particles
@@ -23,7 +24,7 @@ class ParticleFilter():
         else:
             g = 0
 
-        self.particles[:] = [max(min(particle + g*randint(1, 2), 2), 0) for particle in self.particles]
+        self.particles[:] = [max(min(particle + g*randint(0, 2), 2), 0) for particle in self.particles]
 
     def update_weights(self, pan_label_name):
         if 'plate' in pan_label_name:
