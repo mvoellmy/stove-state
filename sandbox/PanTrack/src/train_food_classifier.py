@@ -152,8 +152,8 @@ else:
 
                 elif _params['feature_type'] == 'SIFT':
 
-                    surf = cv2.xfeatures2d.SURF_create(400)
-                    kp, des = surf.detectAndCompute(patch, ellipse_mask[:, :, 0])
+                    sift = cv2.xfeatures2d.SIFT_create()
+                    kp, des = sift.detectAndCompute(patch, ellipse_mask[:, :, 0])
 
                 if _plot_ellipse:
                     plot_patch = cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
