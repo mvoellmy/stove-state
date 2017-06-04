@@ -39,12 +39,13 @@ class FoodRecognizer:
         self.pan_model_name = '2017-05-11-16_44_38'
 
         if self._plate_of_interest == 'I_4':
-            self.pan_model_name = '2017-05-18-18_25_11'  # I_4 begg1
-            self.food_model_name = '2017-05-19-09_20_36' # I_4 poly
+            self.pan_model_name = '2017-05-18-18_25_11'   # I_4 begg1 hog
+            self.food_model_name = '2017-05-19-09_20_36'  # I_4 poly rgb_hist
+            self.food_model_name = '2017-06-04-17_40_02'  # I_4 SIFT
 
         elif self._plate_of_interest == 'I_2':
-            self.pan_model_name = '2017-05-18-17_03_24'  # I_2 segg/scegg
-            self.food_model_name = '2017-05-18-14_19_44'
+            self.pan_model_name = '2017-05-18-17_03_24'   # I_2 segg/scegg hog
+            self.food_model_name = '2017-05-18-14_19_44'  # rgb_hist
 
         else:
             print('ERROR: Invalid Plate of interest')
@@ -72,6 +73,10 @@ class FoodRecognizer:
         # Read corners and reshape them into 2d-Array
         self.corners = np.reshape(self._pan_params['corners'], (-1, 4))
         self.plate_of_interest = int(self._pan_params['plate_of_interest'])
+
+        if self._food_params['feature_type'] == 'SIFT':
+            self.kmeans = pickle.load(open(self.food_models_path + 'K_' + self.food_model_name + '.sav', 'rb'))
+
 
         # import images or videos or video stream
         # self.fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
@@ -126,6 +131,20 @@ class FoodRecognizer:
                                      [self._food_params['feature_params']['resolution']], [0, 256]))
 
                 food_feature = food_feature.flatten()
+
+            if self._food_params['feature_type'] == 'SIFT':
+                sift = cv2.xfeatures2d.SIFT_create()
+                kp, descriptors = sift.detectAndCompute(patch, ellipse_mask[:, :, 0])
+
+                food_feature = np.zeros((1, self._food_params['feature_params']['k']))
+                # Create
+                if descriptors is None:
+                    print('feature dead')
+                else:
+                    sift_stack = np.reshape(descriptors, (-1, 128))
+
+                    for sift_feature in sift_stack:
+                        food_feature[0, self.kmeans.predict(sift_feature)] += 1
 
             self.food_label_predicted_id = self.food_model.predict(food_feature)
             self.food_label_predicted_name = self._food_params['labels'][int(self.food_label_predicted_id)]
