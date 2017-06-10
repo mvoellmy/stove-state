@@ -7,7 +7,7 @@ import time
 import pickle
 
 from random import shuffle
-from math import pi
+from math import pi, log
 
 # Sk learn
 from sklearn.model_selection import train_test_split
@@ -31,7 +31,8 @@ if _params['feature_type'] == 'RGB_HIST':
     _feature_params = {'resolution': 32}
 
 elif _params['feature_type'] == 'SIFT':
-    _feature_params = {'k': 50}
+    _feature_params = {'k': 50,
+                       'tf-idf': True}
 
 _params['feature_params'] = _feature_params
 
@@ -44,7 +45,7 @@ features_name = '2017-05-19-09_12_03'
 _train_model = True
 _load_features = _train_model
 _load_features = False
-_max_features = 200
+_max_features = 30
 _test_size = 0.3
 
 _use_mse = False
@@ -95,7 +96,7 @@ pan_locator = PanLocator(_ellipse_method='CONVEX', _ellipse_smoothing='RAW')
 if _load_features:
     print('---------------------------')
     print('Features name: {}'.format(features_name))
-    data = np.load(features_path + 'F_' + features_name + '.npy')
+    data_vw = np.load(features_path + 'F_' + features_name + '.npy')
     labels = np.load(features_path + 'L_' + features_name + '.npy')
 
     # load info file
@@ -201,18 +202,43 @@ else:
     print('Feature extraction finished!')
     print('---------------------------')
 
-    data = np.zeros((len(data_s), _feature_params['k']))
+    data_vw = np.zeros((len(data_s), _feature_params['k']))  # data_vw: Visual Word matrix [nr_of_imgs, k: nr_of_visual_words]
 
     # BAG OF WORDS
     if _params['feature_type'] == 'SIFT':
+        # data_s: List with the sift features of each image in in a combined cell
+        # sift_features: ALL sift features used for clustering
         sift_features = np.vstack(data_s)
         # K Means Clustering
         kmeans = KMeans(n_clusters=_feature_params['k'], random_state=0).fit(sift_features)
 
+        if _feature_params['tf-idf']:
+            tf = np.zeros(data_vw.shape)
+            idf = np.zeros(_feature_params['k'])
+
         # Index Visual Words
-        for i, img_data in enumerate(data_s):
-            for sift_feature in img_data:
-                data[i, kmeans.predict(sift_feature)] += 1
+        for i, img_features in enumerate(data_s):
+            for sift_feature in img_features:
+                data_vw[i, kmeans.predict(sift_feature)] += 1
+
+            if _feature_params['tf-idf']:
+                # Term frequency
+                for j, visual_word_count in enumerate(data_vw[i, :]):
+                    tf[i, j] = visual_word_count/sum(data_vw[i, :])
+
+        if _feature_params['tf-idf']:
+            # Inverse Document Frequency
+            for i, visual_word_occurances_in_imgs in enumerate(data_vw.T):
+                idf[i] = (log(len(visual_word_occurances_in_imgs)/np.count_nonzero(visual_word_occurances_in_imgs)))
+                print(np.count_nonzero(visual_word_occurances_in_imgs))
+                print(len(visual_word_occurances_in_imgs))
+
+            input(tf)
+            input(idf)
+
+            data_vw = data_vw * tf * idf
+
+            _params['visual_word_idf'] = idf.tolist()
 
     # Save features
     if input('Save features? [y/n]').lower() == 'y':
@@ -222,7 +248,7 @@ else:
         info_name = features_path + 'I_' + f_time_name + '.txt'
         kmeans_name = features_path + 'K_' + f_time_name + '.sav'
 
-        np.save(features_name, data)
+        np.save(features_name, data_vw)
         np.save(labels_name, labels)
         # save I=Info in txt file
         with open(info_name, 'w') as file:
@@ -235,7 +261,7 @@ else:
 
 print('---------------------------')
 if _train_model:
-    train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
+    train_data, test_data, train_labels, test_labels = train_test_split(data_vw, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
         {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},

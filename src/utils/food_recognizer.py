@@ -41,7 +41,9 @@ class FoodRecognizer:
         if self._plate_of_interest == 'I_4':
             self.pan_model_name = '2017-05-18-18_25_11'   # I_4 begg1 hog
             self.food_model_name = '2017-05-19-09_20_36'  # I_4 poly rgb_hist
+            self.food_model_name = '2017-06-10-18_23_58'  # I_4 First tf-idf test
             self.food_model_name = '2017-06-04-17_40_02'  # I_4 SIFT
+            self.food_model_name = '2017-06-10-18_52_46'  # I_4 SIFT + tf-idf
 
         elif self._plate_of_interest == 'I_2':
             self.pan_model_name = '2017-05-18-17_03_24'   # I_2 segg/scegg hog
@@ -136,7 +138,7 @@ class FoodRecognizer:
                 sift = cv2.xfeatures2d.SIFT_create()
                 kp, descriptors = sift.detectAndCompute(patch, ellipse_mask[:, :, 0])
 
-                food_feature = np.zeros((1, self._food_params['feature_params']['k']))
+                food_feature = np.zeros(self._food_params['feature_params']['k'])
                 # Create
                 if descriptors is None:
                     print('feature dead')
@@ -144,7 +146,16 @@ class FoodRecognizer:
                     sift_stack = np.reshape(descriptors, (-1, 128))
 
                     for sift_feature in sift_stack:
-                        food_feature[0, self.kmeans.predict(sift_feature)] += 1
+                        food_feature[self.kmeans.predict(sift_feature)] += 1
+
+                    if self._food_params['feature_params']['tf-idf']:
+                        tf = np.zeros(self._food_params['feature_params']['k'])
+                        idf = self._food_params['visual_word_idf']
+
+                        for i, visual_word_count in enumerate(food_feature):
+                            tf[i] = visual_word_count/sum(food_feature)
+
+                        food_feature = food_feature * tf * idf
 
             self.food_label_predicted_id = self.food_model.predict(food_feature)
             self.food_label_predicted_name = self._food_params['labels'][int(self.food_label_predicted_id)]
