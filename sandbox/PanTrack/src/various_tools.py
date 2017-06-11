@@ -1,13 +1,17 @@
 import os
 import random
+import time
 import cv2
 import pickle
-from helpers import *
 import numpy as np
+
+# Own libraries
+from helpers import *
+from food_recognizer import *
 
 path_data = '/Users/miro/Desktop/test_dataset/'
 path_data = '/Users/miro/Desktop/I_4/'  # 4.
-path_data = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/data/'  # 5.
+path_data = '/Users/miro/Polybox/Shared/ssds_ian/pan_detect/data/'  # 5.
 path_train = path_data + 'train/'
 path_val = path_data + 'val/'
 img_type = '.jpg'
@@ -22,6 +26,7 @@ print('2. Split dataset into test and train')
 print('3. Undo split')
 print("4. Only keep every n-th frame (for path-data)")
 print("5. Find model accurracy")
+print("6. Find confusion matrix")
 action = int(input('What do you want to do?\n'))
 
 if action == 1:
@@ -149,7 +154,6 @@ elif action == 4:
     print('{} images deleted in total'.format(removed_counter))
 
 elif action == 5:
-
     # Load model
     # pan_model_name = input('Model name = ')
     pan_model_name = '2017-05-18-18_25_11'  # I_4 begg
@@ -168,6 +172,7 @@ elif action == 5:
     model_accurracy = np.zeros((3, 3))
 
     path_data = path_data + _pan_params['stove_type'] + '_' + str(_pan_params['plate_of_interest']) + '/pan/'
+
     # Get data
     class_list = [f for f in os.listdir(path_data) if os.path.isdir(os.path.join(path_data, f))]
 
@@ -222,6 +227,92 @@ elif action == 5:
     if input('Save accurracy? [y/n]\n') == 'y':
         accurracy_name = pan_models_path + 'A_' + pan_model_name + '.npy'
         np.save(accurracy_name, model_accurracy)
+
+elif action == 6:
+
+    start_time = time.time()
+
+    # Pan accuracies
+    plate_of_interest = 'I_4'
+
+    pan_path_data = path_data + plate_of_interest + '/pan/'
+    food_path_data = path_data + plate_of_interest + '/food/'
+
+    food_rec = FoodRecognizer(plate_of_interest=plate_of_interest,
+                              ellipse_smoothing='RAW',
+                              ellipse_method='MAX_ARC')
+
+    pan_model_name, pan_models_path, food_model_name, food_models_path = food_rec.get_models()
+
+    # Get data
+    pan_class_list = [f for f in os.listdir(pan_path_data) if os.path.isdir(os.path.join(pan_path_data, f))]
+    food_class_list = [f for f in os.listdir(food_path_data) if os.path.isdir(os.path.join(food_path_data, f))]
+
+    pan_confusion = np.zeros((len(pan_class_list), len(pan_class_list)))
+    food_confusion = np.zeros((len(food_class_list), len(food_class_list)))
+
+    # for class_name in pan_class_list:
+    #    if 'pan' in class_name:
+    #        pan_class_list.remove(class_name)
+
+    print('Pan model: {}\nFood model: {}'.format(pan_model_name, food_model_name))
+
+    # Build pan label confusion matrix
+    for pan_label_id, pan_label_name in enumerate(pan_class_list):
+
+        if 'pan' in pan_label_name:
+            print('Starting pan label...')
+            for food_label_id, food_label_name in enumerate(food_class_list):
+
+                img_list = [f for f in os.listdir(food_path_data + food_label_name)
+                            if os.path.isfile(os.path.join(food_path_data + food_label_name, f))
+                            and img_type in f]
+
+                print('Starting food label {} containing {} images...'.format(food_label_name, len(img_list)))
+                for img_nr, img_name in enumerate(img_list):
+                    # Load img
+                    frame = cv2.imread(food_path_data + food_label_name + '/' + img_name, 0)
+
+                    pred_pan_label_name, pred_food_label_name, pred_pan_label_id, pred_food_label_id = food_rec.process_frame(frame)
+
+                    pan_confusion[pan_label_id, pred_pan_label_id] += 1
+                    food_confusion[food_label_id, pred_food_label_id] += 1
+
+        else:
+
+            img_list = [f for f in os.listdir(pan_path_data + pan_label_name)
+                        if os.path.isfile(os.path.join(pan_path_data + pan_label_name, f))
+                        and img_type in f]
+
+            print('Starting food label {} containing {} images...'.format(pan_label_name, len(img_list)))
+            for img_nr, img_name in enumerate(img_list):
+                # Load img
+                frame = cv2.imread(pan_path_data+pan_label_name + '/' + img_name, 0)
+
+                pred_pan_label_name, pred_food_label_name, pred_pan_label_id, pred_food_label_id = food_rec.process_frame(frame)
+
+                pan_confusion[pan_label_id, pred_pan_label_id] += 1
+
+    print('Finished ')
+
+    # Normalize Accuracies
+    pan_confusion = (pan_confusion.T / pan_confusion.sum(axis=1)).T
+    food_confusion = (food_confusion.T / food_confusion.sum(axis=1)).T
+
+    if True or input('Save confusion matrices? [y/n]\n') == 'y':
+        pan_confusion_name = pan_models_path + 'A_' + pan_model_name + '.npy'
+        np.save(pan_confusion_name, pan_confusion)
+
+        food_confusion_name = food_models_path + 'A_' + food_model_name + '.npy'
+        np.save(food_confusion_name, food_confusion)
+
+    print('_______________________________')
+    print('Confusion matrix for pan model: {}\n'.format(pan_confusion))
+    print('_______________________________')
+    print('Confusion matrix for food model: {}\n'.format(food_confusion))
+
+    print('Ellapsed time: {}'.format(time.time() - start_time))
+    print('{} dead features').format(food_rec.get_dead_features())
 
 else:
     print('nothing done...wrong input')

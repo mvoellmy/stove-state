@@ -31,7 +31,7 @@ if _params['feature_type'] == 'RGB_HIST':
     _feature_params = {'resolution': 32}
 
 elif _params['feature_type'] == 'SIFT':
-    _feature_params = {'k': 50,
+    _feature_params = {'k': 500,
                        'tf-idf': True}
 
 _params['feature_params'] = _feature_params
@@ -45,11 +45,12 @@ features_name = '2017-05-19-09_12_03'
 _train_model = True
 _load_features = _train_model
 _load_features = False
-_max_features = 30
+_save_features = True
+_max_features = 3000
 _test_size = 0.3
 
 _use_mse = False
-_use_img_shuffle = False
+_use_img_shuffle = True
 
 # Output Options
 _plot_patches = False
@@ -210,16 +211,17 @@ else:
         # sift_features: ALL sift features used for clustering
         sift_features = np.vstack(data_s)
         # K Means Clustering
+        print('Building K-Means Cluster')
         kmeans = KMeans(n_clusters=_feature_params['k'], random_state=0).fit(sift_features)
 
         if _feature_params['tf-idf']:
             tf = np.zeros(data_vw.shape)
             idf = np.zeros(_feature_params['k'])
-
+        print('Indexing Visual Words')
         # Index Visual Words
         for i, img_features in enumerate(data_s):
             for sift_feature in img_features:
-                data_vw[i, kmeans.predict(sift_feature)] += 1
+                data_vw[i, kmeans.predict(sift_feature.reshape(1, -1))] += 1
 
             if _feature_params['tf-idf']:
                 # Term frequency
@@ -230,18 +232,13 @@ else:
             # Inverse Document Frequency
             for i, visual_word_occurances_in_imgs in enumerate(data_vw.T):
                 idf[i] = (log(len(visual_word_occurances_in_imgs)/np.count_nonzero(visual_word_occurances_in_imgs)))
-                print(np.count_nonzero(visual_word_occurances_in_imgs))
-                print(len(visual_word_occurances_in_imgs))
-
-            input(tf)
-            input(idf)
 
             data_vw = data_vw * tf * idf
 
             _params['visual_word_idf'] = idf.tolist()
 
     # Save features
-    if input('Save features? [y/n]').lower() == 'y':
+    if _save_features or input('Save features? [y/n]').lower() == 'y':
         f_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
         features_name = features_path + 'F_' + f_time_name + '.npy'
         labels_name = features_path + 'L_' + f_time_name + '.npy'
@@ -265,8 +262,7 @@ if _train_model:
     # Optimize the parameters by cross-validation
     parameters = [
         {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        {'kernel': ['linear'], 'C': [ 50, 100]},
-        {'kernel': ['linear'], 'C': [1]},
+        {'kernel': ['linear'], 'C': [1, 500, 1000]},
         {'kernel': ['poly'], 'degree': [2]}
     ]
 
