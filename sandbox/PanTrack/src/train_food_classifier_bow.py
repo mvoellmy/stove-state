@@ -46,7 +46,7 @@ _train_model = True
 _load_features = _train_model
 _load_features = False
 _save_features = True
-_max_features = 3000
+_max_features = 10000
 _test_size = 0.3
 
 _use_mse = False
