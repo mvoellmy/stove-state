@@ -64,7 +64,7 @@ class GestureRecognizer(object):
             predictions = np.zeros((len(label_names), 1), dtype=np.int)
             for i in range(0,N):
                 clf = pickle.load(open(path_models + 'model_STF_{}'.format(i), 'rb'))
-                predicted_label = clf.predict(STF[:,i])
+                predicted_label = clf.predict(STF[:,i].reshape(1, -1))
                 predictions[predicted_label - 1] += 1
 
             best_label_idx = predictions.argmax()

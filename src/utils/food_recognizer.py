@@ -13,7 +13,7 @@ from helpers import *
 
 class FoodRecognizer:
 
-    def __init__(self, plate_of_interest, ellipse_smoothing='VOTE', ellipse_method='MAX_ARC'):
+    def __init__(self, plate_of_interest, ellipse_smoothing='VOTE_SLIDE', ellipse_method='MAX_ARC'):
         # Params
         self._ellipse_smoothing = 'AVERAGE'
         self._ellipse_smoothing = 'RAW'
@@ -120,8 +120,8 @@ class FoodRecognizer:
         self.pan_label_predicted_id = self.pan_model.predict(pan_feature.reshape(1, -1))
         self.pan_label_predicted_name = self._pan_params['labels'][int(self.pan_label_predicted_id)]
 
-        if 'pan' in self.pan_label_predicted_name:
-        # if True:
+        # if 'pan' in self.pan_label_predicted_name:
+        if True:
 
             self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
 

@@ -12,12 +12,14 @@ config.read('../cfg/cfg.txt')
 path_videos = config.get('paths', 'videos')
 
 # Choose which stove and plate is observed
-plate_of_interest = 'I_4'
+plate_of_interest = 'I_2'
 
 if plate_of_interest == 'I_4':
     path_video = path_videos + '/I_begg/I_20170516_212934_multiple.mp4'
     path_video = path_videos + '/I_begg/I_2017-04-06-20_08_45_begg.mp4'
     path_video = path_videos + '/I_begg/demo_begg.mov'
+    path_video = '/Users/miro/Polybox/Shared/ssds_ian/pan_detect/test_videos/pot_positions.mp4'
+
 elif plate_of_interest == 'I_2':
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/scegg_test_2.mp4'
     path_video = path_videos + '/I_scegg/I_20170427_212553_scegg.mp4'
@@ -25,6 +27,8 @@ elif plate_of_interest == 'I_2':
     path_video = path_videos + '/I_segg/I_20170504_221703_segg.mp4'
     path_video = path_videos + '/I_scegg/I_20170425_205126_scegg.mp4'  # this is gud
     path_video = '/Users/miro/Polybox/Shared/stove-state-data/ssds/pan_detect/test_videos/segg_short.mov'
+    path_video = '/Users/miro/Polybox/Shared/ssds_ian/pan_detect/test_videos/pan_positions.mp4'
+
 
 cap = cv2.VideoCapture(path_video)
 
@@ -33,12 +37,12 @@ gesture_rec = GestureRecognizer()
 p_filter = ParticleFilter(200)
 
 # Playback Options
-_start_frame = 0
+_start_frame = 3000
 _end_frame = -1
-_frame_rate = 12 # Only process every 'n'th frame
+_frame_rate = 3  # Only process every 'n'th frame
 
 # Plot Options
-_plot_segmentation = True
+_plot_segmentation = False
 
 frame_id = 0
 food_rec_time = -2
@@ -79,8 +83,8 @@ while cap.isOpened():
         p_filter.update_weights(pan_label_name)
         pan_state_dist = p_filter.count_particles()
 
-        if 'pan' in pan_label_name:
-        # if True:
+        # if 'pan' in pan_label_name:
+        if True:
             center, axes, phi = food_rec.get_pan_location()
             cv2.ellipse(frame, tuple(map(int, center)), tuple(map(int, axes)),
                         int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=5)
