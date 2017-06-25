@@ -7,12 +7,13 @@ import time
 import pickle
 
 from random import shuffle
-from math import pi
+from math import pi, log
 
 # Sk learn
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
 
 # Own Libraries
 from panlocator import PanLocator
@@ -22,12 +23,16 @@ from helpers import *
 # Features Info Parameters
 _params = {'stove_type':        'I',
            'plate_of_interest': 4,
-           'feature_type':      'RGB_HIST',
+           'feature_type':      'SIFT',
            'nr_of_features':    0}
 
 if _params['feature_type'] == 'RGB_HIST':
     # RGB Histogram Params
     _feature_params = {'resolution': 32}
+
+elif _params['feature_type'] == 'SIFT':
+    _feature_params = {'k': 500,
+                       'tf-idf': True}
 
 _params['feature_params'] = _feature_params
 
@@ -37,10 +42,11 @@ cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-19-07_34_40'  # I_2 scegg and segg #
 features_name = '2017-05-19-09_12_03'
 
-_train_model = False
+_train_model = True
 _load_features = _train_model
-# _load_features = False
-_max_features = 2000
+_load_features = False
+_save_features = True
+_max_features = 10000
 _test_size = 0.3
 
 _use_mse = False
@@ -50,9 +56,8 @@ _use_img_shuffle = True
 _plot_patches = False
 _plot_ellipse = True
 _plot_hists = False
-_print_update_rate = 100
-_plot_fails = False
-_locate_pan = False
+_print_update_rate = 50
+_plot_fails = True
 
 # Read Config data
 config = configparser.ConfigParser()
@@ -78,8 +83,9 @@ print(data_path)
 label_types = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
 
 # initialize variables
+sift_accu = []                  # Container storing all img_accus which store the sift features
 labels = []
-data = []
+data_s = []
 patches = []
 print_update_state = _print_update_rate
 
@@ -91,7 +97,7 @@ pan_locator = PanLocator(_ellipse_method='CONVEX', _ellipse_smoothing='RAW')
 if _load_features:
     print('---------------------------')
     print('Features name: {}'.format(features_name))
-    data = np.load(features_path + 'F_' + features_name + '.npy')
+    data_vw = np.load(features_path + 'F_' + features_name + '.npy')
     labels = np.load(features_path + 'L_' + features_name + '.npy')
 
     # load info file
@@ -103,6 +109,8 @@ if _load_features:
     print('Parameters: ')
     for key, val in _params.items():
         print('\t{}: {}'.format(key, val))
+
+    kmeans = pickle.load(features_path + 'K_' + features_name + '.sav', 'rb')
 
 else:
     for label_nr, label_name in enumerate(label_types):
@@ -148,13 +156,24 @@ else:
 
                     feature = feature.flatten()
 
+                elif _params['feature_type'] == 'SIFT':
+
+                    sift = cv2.xfeatures2d.SIFT_create()
+                    kp, descriptors = sift.detectAndCompute(patch, ellipse_mask[:, :, 0])
+
+                    # Create
+                    if descriptors is None:
+                        print('feature dead')
+                    else:
+                        feature = np.reshape(descriptors, (-1, 128))
+
                 if _plot_ellipse:
                     plot_patch = cv2.ellipse(patch, tuple(map(int, center)), tuple(map(int, axes)),
                                              int(-phi * 180 / pi), 0, 360, (0, 0, 255), thickness=2)
                 else:
                     plot_patch = patch
 
-                data.append(feature)
+                data_s.append(feature)
                 labels.append(label_nr)
 
                 nr_of_label_features += 1
@@ -175,47 +194,75 @@ else:
 
             old_patch = patch
 
-        print('{} features extracted'.format(len(data)))
+        print('{} features extracted'.format(len(data_s)))
         print_update_state = _print_update_rate
 
     _params['labels'] = label_types
-    _params['nr_of_features'] = len(data)
+    _params['nr_of_features'] = len(data_s)
 
     print('Feature extraction finished!')
     print('---------------------------')
 
+    data_vw = np.zeros((len(data_s), _feature_params['k']))  # data_vw: Visual Word matrix [nr_of_imgs, k: nr_of_visual_words]
+
     # BAG OF WORDS
     if _params['feature_type'] == 'SIFT':
+        # data_s: List with the sift features of each image in in a combined cell
+        # sift_features: ALL sift features used for clustering
+        sift_features = np.vstack(data_s)
         # K Means Clustering
+        print('Building K-Means Cluster')
+        kmeans = KMeans(n_clusters=_feature_params['k'], random_state=0).fit(sift_features)
 
+        if _feature_params['tf-idf']:
+            tf = np.zeros(data_vw.shape)
+            idf = np.zeros(_feature_params['k'])
+        print('Indexing Visual Words')
         # Index Visual Words
+        for i, img_features in enumerate(data_s):
+            for sift_feature in img_features:
+                data_vw[i, kmeans.predict(sift_feature.reshape(1, -1))] += 1
 
-        pass
+            if _feature_params['tf-idf']:
+                # Term frequency
+                for j, visual_word_count in enumerate(data_vw[i, :]):
+                    tf[i, j] = visual_word_count/sum(data_vw[i, :])
+
+        if _feature_params['tf-idf']:
+            # Inverse Document Frequency
+            for i, visual_word_occurances_in_imgs in enumerate(data_vw.T):
+                idf[i] = (log(len(visual_word_occurances_in_imgs)/np.count_nonzero(visual_word_occurances_in_imgs)))
+
+            data_vw = data_vw * tf * idf
+
+            _params['visual_word_idf'] = idf.tolist()
 
     # Save features
-    if input('Save features? [y/n]').lower() == 'y':
+    if _save_features or input('Save features? [y/n]').lower() == 'y':
         f_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
         features_name = features_path + 'F_' + f_time_name + '.npy'
         labels_name = features_path + 'L_' + f_time_name + '.npy'
         info_name = features_path + 'I_' + f_time_name + '.txt'
+        kmeans_name = features_path + 'K_' + f_time_name + '.sav'
 
-        np.save(features_name, data)
+        np.save(features_name, data_vw)
         np.save(labels_name, labels)
         # save I=Info in txt file
         with open(info_name, 'w') as file:
             file.write(repr(_params))
+
+        pickle.dump(kmeans, open(kmeans_name, 'wb'))
 
         print("Features have been saved with name:\n{}".format(f_time_name))
 
 
 print('---------------------------')
 if _train_model:
-    train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
+    train_data, test_data, train_labels, test_labels = train_test_split(data_vw, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
-        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        # {'kernel': ['linear'], 'C': [ 50, 100]},
-        # {'kernel': ['linear'], 'C': [1]},
+        {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        {'kernel': ['linear'], 'C': [1, 500, 1000]},
         {'kernel': ['poly'], 'degree': [2]}
     ]
 
@@ -244,8 +291,10 @@ if _train_model:
         m_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
         model_name = models_path + 'M_' + m_time_name + '.sav'
         info_name = models_path + 'I_' + m_time_name + '.txt'
+        kmeans_name = models_path + 'K_' + m_time_name + '.sav'
 
         pickle.dump(clf, open(model_name, 'wb'))
+        pickle.dump(kmeans, open(kmeans_name, 'wb'))
 
         with open(info_name, 'w') as file:
             file.write(repr(_params))

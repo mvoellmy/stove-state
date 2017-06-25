@@ -40,6 +40,7 @@ features_name = '2017-05-18-18_23_14'  # I_4 begg
 # Options
 _train_model = True
 _load_features = _train_model
+_get_accurracy = True
 _max_features = 3000
 _test_size = 0.3
 
@@ -180,6 +181,7 @@ else:
 
 print('---------------------------')
 if _train_model:
+
     train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
