@@ -49,6 +49,7 @@ class FoodRecognizer:
 
         elif self._plate_of_interest == 'I_2':
             self.pan_model_name = '2017-05-18-17_03_24'   # I_2 segg/scegg hog
+            self.pan_model_name = '2017-06-27-14_08_43'   # I_2 full dataset with 8 directions
             self.food_model_name = '2017-05-18-14_19_44'  # rgb_hist
 
         else:

@@ -17,14 +17,14 @@ from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
-_feature_params = {'orientations':      4,
+_feature_params = {'orientations':      8,
                    'pixels_per_cell':   (12, 12),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
 # Features Info Parameters
 _params = {'stove_type':        'I',
-           'plate_of_interest': 4,
+           'plate_of_interest': 2,
            'feature_type':      'HOG',
            'nr_of_features':    0,
            'feature_params':    _feature_params}
@@ -36,12 +36,13 @@ cfg_path = '../../../cfg/class_cfg.txt'
 features_name = '2017-05-11-15_52_55'  # I_4 begg
 features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
 features_name = '2017-05-18-18_23_14'  # I_4 begg
+features_name = '2017-06-27-12_06_39'  # I_2 orientations 8
 
 # Options
 _train_model = True
 _load_features = _train_model
 _get_accurracy = True
-_max_features = 3000
+_max_features = 40000
 _test_size = 0.3
 
 _use_mse = True
@@ -185,10 +186,10 @@ if _train_model:
     train_data, test_data, train_labels, test_labels = train_test_split(data, labels, test_size=_test_size, random_state=2)
     # Optimize the parameters by cross-validation
     parameters = [
-        # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        # {'kernel': ['linear'], 'C': [1, 50, 100]},
-        {'kernel': ['linear'], 'C': [1]},
-        # {'kernel': ['poly'], 'degree': [2]}
+        {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
+        {'kernel': ['linear'], 'C': [1, 50, 100]},
+        #{'kernel': ['linear'], 'C': [1]},
+        {'kernel': ['poly'], 'degree': [2]}
     ]
 
     # Grid search object with SVM classifier.
