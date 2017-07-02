@@ -88,6 +88,16 @@ def PCA_direction(segmented_CC, centroid):
     y2 = int(y_v1*scale + centroid[0])
     return x1, y1, x2, y2
 
+def draw_flow(img, trajectory):
+    q = 6
+    if len(trajectory) > 2:
+        for i in range(0, int(len(trajectory)/2-q), q):
+            if i < 20:
+                img = cv2.arrowedLine(img, (int(trajectory[i*2+1]), int(trajectory[i*2])),(int(trajectory[(i+q)*2+1]), int(trajectory[(i+q)*2])), (0, 255, 0), 2, tipLength =0.2)
+            else:
+                img = cv2.line(img, (int(trajectory[i * 2 + 1]), int(trajectory[i * 2])),(int(trajectory[(i + q) * 2 + 1]), int(trajectory[(i + q) * 2])), (0, 255, 0), 2)
+    return img
+
 ######################################################################################
 
 def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
@@ -107,13 +117,19 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
     condition = False
     bMHI = []
     MH_length = 10
+    frame_num = 0
+
+    trajectory = np.array([], dtype=np.float32)
+
     while (cap.isOpened()):
         ret, frame = cap.read()
+
 
         if ret == False:
             break
         frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         dim = frame.shape
+        frame_feature = frame.copy()
 
         # Color Segmentation --------------------------------------------
         segmented = segmentation_YCC(frame)
@@ -136,9 +152,20 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
             orientation = math.atan2((b - d) , (a - c))
 
             # Plot centroid and orientation ------------------------------------------
-            frame = cv2.circle(frame, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
+            backtorgb = cv2.cvtColor(segmented_final, cv2.COLOR_GRAY2RGB)
+            frame_feature_mask = frame_feature.copy()
+            frame_feature_mask[backtorgb != 0] = 0
+            frame_feature_mask = cv2.blur(frame_feature_mask, (5,5))
+            frame_feature[backtorgb == 0] = 0
+            # frame_feature = frame_feature + frame_feature_mask
+            frame_feature_mask = cv2.cvtColor(frame_feature_mask, cv2.COLOR_RGB2GRAY)
+            frame_feature_mask = cv2.cvtColor(frame_feature_mask, cv2.COLOR_GRAY2RGB)
+            frame_feature[backtorgb == 0] = frame_feature_mask[backtorgb == 0]
+            trajectory = np.hstack([trajectory, centroid])
+            frame_feature = draw_flow(frame_feature, trajectory)
+            # frame_feature = cv2.circle(frame_feature, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
             segmented_final_color = cv2.circle(segmented_final_color, (int(centroid[1]), int(centroid[0])), 10, (0, 255, 0), -1)
-            frame = cv2.line(frame, (a, b), (c, d), (0, 0, 255), 10)
+            # frame_feature = cv2.line(frame_feature, (a, b), (c, d), (0, 0, 255), 10)
             segmented_final_color = cv2.line(segmented_final_color, (a, b), (c, d), (0, 0, 255), 10)
 
             # Write features --------------------------------------------------------
@@ -186,8 +213,9 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
 
 
         # Display Images -----------------------------------------------------------
+
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
-        cv2.imshow("Frame", segmented)
+        cv2.imshow("Frame", frame_feature)
         cv2.resizeWindow("Frame", int(dim[1]/2), int(dim[0]/2))
         cv2.namedWindow("Segmented", cv2.WINDOW_NORMAL)
         cv2.imshow("Segmented", segmented_final_color)  #segmented_final_color
@@ -202,6 +230,16 @@ def pipeline(cap, cap_video, path_feature_file=[], path_video_file=[]):
                 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
                 out = cv2.VideoWriter(path_video_file, fourcc, 25.0, (dim[1], dim[0]), True)
             out.write(frame)
+
+
+        # frame_feature = cv2.blur(frame_feature[backtorgb==0])
+        if frame_num == 34:
+            cv2.imwrite("img/segmented.png", segmented)
+            cv2.imwrite("img/segmented_final.png", segmented_final)
+            cv2.imwrite("img/frame.png", frame)
+            cv2.imwrite("img/segmented_feature.png", segmented_final_color)
+            cv2.imwrite("img/frame{}.png".format(frame_num), frame_feature)
+        frame_num += 1
 
     # Clear all objects
     cv2.destroyAllWindows()

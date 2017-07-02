@@ -88,7 +88,7 @@ def spatio_temporal_features(data, labels_range, labels, num_features, label_nam
         features_y = np.zeros((N, 1))
         for f in range(0, N):
             features[0, f] = round(interp(math.atan2(-data[idx, 2], data[idx, 3]), [-math.pi, math.pi], [0, 16]), 0)
-            features[1, f] = interp(data[idx, 4], [-math.pi, math.pi], [0, 16], 0)
+            features[1, f] = interp(data[idx, 4], [-math.pi, math.pi], [0, 16])
             # features[2, f] = math.sqrt(data[idx, 2]**2 + data[idx,3]**2)
             # features[2,f] = data[idx,0]
             # features[3,f] = data[idx,1]
@@ -100,6 +100,7 @@ def spatio_temporal_features(data, labels_range, labels, num_features, label_nam
             plt.subplot(2, 4, labels[i])
             plt.plot(features_x, features_y, marker='x')
             plt.title(label_names[labels[i] - 1])
+            plt.tight_layout()
     if plot_name != []:
         fig.canvas.set_window_title(plot_name)
     STF = np.asarray(STF)

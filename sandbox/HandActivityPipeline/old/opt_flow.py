@@ -58,11 +58,12 @@ if __name__ == '__main__':
 
     cap = cv2.VideoCapture('../../data/place_noodles.mp4')
 
-    video_format = '.mp4'
+    video_format = '.h264'
 
-    path_videos = '../../../../Polybox/Shared/stove-state-data/ssds/test/'
+    path_videos = '../../../../../Polybox/Shared/stove-state-data/ssds/test/'
+    path_videos = '../../../../../Polybox/Shared/stove-state-data/ssds/gestures/segg/6/'
     path_labels = ''
-    file_name = 'place_schnitzel_1'
+    file_name = 'I_20170501_212055_segg'
 
     cap = cv2.VideoCapture(join(path_videos, file_name + video_format))
 

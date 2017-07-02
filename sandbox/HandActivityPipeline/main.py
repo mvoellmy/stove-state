@@ -35,28 +35,28 @@ file_names = ['I_20170501_212055_segg',
               'I_20170504_221703_segg',
               'I_20170505_220258_segg']
 
-file_names = [ file_names[1] ]
+file_names = [ file_names[3] ]
 num_files = len(file_names)
 num_gestures = 1
 
-# for file_name in file_names:
-#     for gesture_num in range(1,num_gestures+1):
-#         gesture_num = 3
-#         recipe_name = file_name.rsplit("_", 1)[-1].split(".")[0]  # Takes the word after the last underscore
-#         path_video = join(path_videos, file_name + video_format)
-#         path_gesture = join(path_gestures, recipe_name, '{}'.format(gesture_num), file_name + '.h264')
-#         cap_gesture = cv2.VideoCapture(path_gesture)
-#         cap_video = cv2.VideoCapture(path_video)
-#
-#         if cap_gesture.isOpened():
-#             path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features.csv")
-#         else:
-#             path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features_false.csv")
-#         path_video_file = join(path_recording, "{}_".format(gesture_num) + file_name + '.avi')
-#         path_feature_file=[]
-#         path_video_file=[]
-#
-#         pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)
+for file_name in file_names:
+    for gesture_num in range(1,num_gestures+1):
+        gesture_num = 7
+        recipe_name = file_name.rsplit("_", 1)[-1].split(".")[0]  # Takes the word after the last underscore
+        path_video = join(path_videos, file_name + video_format)
+        path_gesture = join(path_gestures, recipe_name, '{}'.format(gesture_num), file_name + '.h264')
+        cap_gesture = cv2.VideoCapture(path_gesture)
+        cap_video = cv2.VideoCapture(path_video)
+
+        if cap_gesture.isOpened():
+            path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features.csv")
+        else:
+            path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features_false.csv")
+        path_video_file = join(path_recording, "{}_".format(gesture_num) + file_name + '.avi')
+        path_feature_file=[]
+        path_video_file=[]
+
+        pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)
 
 
 # file_names = ['I_20170430_210819_begg_1',
@@ -84,24 +84,24 @@ num_gestures = 1
 #
 #     pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)
 
-file_name = 'I_20170516_214934_multiple'
-path_file_names = glob.glob(join(path_features, '*.h264'))
-num_gestures = 1
-for gesture_num in range(1,num_gestures+1):
-    gesture_num = 1
-    recipe_name = file_name.rsplit("_", 1)[-1].split(".")[0]  # Takes the word after the last underscore
-    path_video = join(path_videos, file_name + video_format)
-    path_gesture_all = glob.glob(join(path_gestures, recipe_name, '{}'.format(gesture_num), '*.h264'))
-    for i, path_gesture in enumerate(path_gesture_all):
-        cap_gesture = cv2.VideoCapture(path_gesture)
-        cap_video = cv2.VideoCapture(path_video)
-
-        if cap_gesture.isOpened():
-            path_feature_file = join(path_features, recipe_name + '2', "{}_".format(gesture_num) + file_name + "{}".format(i) + "_features.csv")
-        else:
-            path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features_false.csv")
-        path_video_file = join(path_recording, "{}_".format(gesture_num) + file_name + '.avi')
-        path_feature_file=[]
-        path_video_file=[]
-
-        pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)
+# file_name = 'I_20170516_214934_multiple'
+# path_file_names = glob.glob(join(path_features, '*.h264'))
+# num_gestures = 1
+# for gesture_num in range(1,num_gestures+1):
+#     gesture_num = 1
+#     recipe_name = file_name.rsplit("_", 1)[-1].split(".")[0]  # Takes the word after the last underscore
+#     path_video = join(path_videos, file_name + video_format)
+#     path_gesture_all = glob.glob(join(path_gestures, recipe_name, '{}'.format(gesture_num), '*.h264'))
+#     for i, path_gesture in enumerate(path_gesture_all):
+#         cap_gesture = cv2.VideoCapture(path_gesture)
+#         cap_video = cv2.VideoCapture(path_video)
+#
+#         if cap_gesture.isOpened():
+#             path_feature_file = join(path_features, recipe_name + '2', "{}_".format(gesture_num) + file_name + "{}".format(i) + "_features.csv")
+#         else:
+#             path_feature_file = join(path_features, recipe_name, "{}_".format(gesture_num) + file_name + "_features_false.csv")
+#         path_video_file = join(path_recording, "{}_".format(gesture_num) + file_name + '.avi')
+#         path_feature_file=[]
+#         path_video_file=[]
+#
+#         pipeline(cap_gesture, cap_video, path_feature_file, path_video_file)

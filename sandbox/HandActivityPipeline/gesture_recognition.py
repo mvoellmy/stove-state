@@ -4,6 +4,7 @@ import configparser
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
 import pickle
+from matplotlib.ticker import MaxNLocator
 from utils import *
 
 np.set_printoptions(precision=2)
@@ -37,16 +38,18 @@ file_names_begg = np.array(['I_2017-04-06-20_08_45_begg',
                             'I_20170428_224946_begg',
                             'I_20170430_210819_begg',
                             'I_20170503_232838_begg',
-                            'I_20170504_215844_begg',       # -> 1 other gesture
-                            'I_20170505_214143_begg'])      # -> different position on stove
+                            'I_20170504_215844_begg'       # -> 1 other gesture
+                            #,'I_20170505_214143_begg'     # -> different position on stove
+                             ])
 
 file_names_segg = np.array(['I_20170501_212055_segg',
-                            'I_20170502_212256_segg',       # -> 2 other gestures
-                            'I_20170503_234946_segg',       # -> 2 other gestures
-                            'I_20170504_221703_segg',       # -> 3 other gestures
-                            'I_20170505_220258_segg'])      # -> different position on stove
+                            'I_20170502_212256_segg',      # -> 2 other gestures
+                            'I_20170503_234946_segg',      # -> 2 other gestures
+                            'I_20170504_221703_segg'       # -> 3 other gestures
+                            #,'I_20170505_220258_segg'     # -> different position on stove
+                             ])
 
-file_names_multiple = np.array(['I_20170516_212934_multiple0',
+file_names_multiple_begg = np.array(['I_20170516_212934_multiple0',
                                 'I_20170516_212934_multiple1',
                                 'I_20170516_212934_multiple2',
                                 'I_20170516_212934_multiple3',
@@ -57,26 +60,41 @@ file_names_multiple = np.array(['I_20170516_212934_multiple0',
                                 'I_20170516_214934_multiple3',
                                 'I_20170516_214934_multiple4'])
 
+file_names_multiple_segg = np.array(['I_20170525_223120_multiple0',
+                                'I_20170525_223120_multiple1',
+                                'I_20170525_223120_multiple2',
+                                'I_20170525_223120_multiple3',
+                                'I_20170525_223120_multiple4',
+                                'I_20170525_224708_multiple0',
+                                'I_20170525_224708_multiple1',
+                                'I_20170525_224708_multiple2',
+                                'I_20170525_224708_multiple3',
+                                'I_20170525_224708_multiple4'])
+
 count_correct_predictions = 0
 count_predictions = 0
 count_correct_predictions_all = np.zeros((len(label_names),1))
 count_predictions_all = np.zeros((len(label_names),1))
 count_distinctive_predictions = 0
 count_all_predictions = 0
+prediction_given_actual = np.zeros((len(label_names), len(label_names)))
 
-for begg_val_idx in range(3,4):
+for begg_val_idx in range(0,1):
     for segg_val_idx in range(0,1):
-        for multiple_val_idx in range(3,4):
+        for multiple_val_idx in range(0,1):
             print("begg: {}, segg: {}, multiple: {}".format(begg_val_idx, segg_val_idx, multiple_val_idx))
 
+            # BEGG DATASET
             path_features = 'gesture_features/begg/'
             out = extract_features(path_features, num_gestures=6, label_encoder=begg_labels, test_file_idx=begg_val_idx, file_names=file_names_begg)
             data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out
 
+            # SEGG DATASET
             # path_features = 'gesture_features/segg/'
             # out2 = extract_features(path_features, num_gestures=8, label_encoder=segg_labels, test_file_idx=segg_val_idx, file_names=file_names_segg)
-            # data_train2, labels_train2, labels_range_train2, data_test, labels_test, labels_range_test = out2
-
+            # # data_train2, labels_train2, labels_range_train2, data_test2, labels_test2, labels_range_test2 = out2
+            # data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out2
+            #
             # data_train = np.concatenate((data_train, data_train2))
             # labels_train = np.concatenate((labels_train, labels_train2))
             # labels_range_train = np.concatenate((labels_range_train, labels_range_train2[1:] + labels_range_train[-1]))
@@ -84,8 +102,9 @@ for begg_val_idx in range(3,4):
             # labels_test = np.concatenate((labels_test, labels_test2))
             # labels_range_test = np.concatenate((labels_range_test, labels_range_test2[1:] + labels_range_test[-1]))
 
-            path_features = 'gesture_features/multiple/'
-            out3 = extract_features(path_features, num_gestures=8, label_encoder=multiple_labels, test_file_idx=multiple_val_idx, file_names=file_names_multiple)
+            # MULTIPLE BEGG DATASET
+            path_features = 'gesture_features/multiple_begg/'
+            out3 = extract_features(path_features, num_gestures=8, label_encoder=multiple_labels, test_file_idx=multiple_val_idx, file_names=file_names_multiple_begg)
             data_train3, labels_train3, labels_range_train3, data_test3, labels_test3, labels_range_test3 = out3
             # data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out3
 
@@ -96,14 +115,30 @@ for begg_val_idx in range(3,4):
             labels_test = np.concatenate((labels_test, labels_test3))
             labels_range_test = np.concatenate((labels_range_test, labels_range_test3[1:] + labels_range_test[-1]))
 
-            fig = plt.figure()
+            # MULTIPLE SEGG DATASET
+            # path_features = 'gesture_features/multiple_segg/'
+            # out4 = extract_features(path_features, num_gestures=8, label_encoder=multiple_labels, test_file_idx=multiple_val_idx, file_names=file_names_multiple_segg)
+            # data_train4, labels_train4, labels_range_train4, data_test4, labels_test4, labels_range_test4 = out4
+            # # data_train, labels_train, labels_range_train, data_test, labels_test, labels_range_test = out4
+            #
+            # data_train = np.concatenate((data_train, data_train4))
+            # labels_train = np.concatenate((labels_train, labels_train4))
+            # labels_range_train = np.concatenate((labels_range_train, labels_range_train4[1:] + labels_range_train[-1]))
+            # data_test = np.concatenate((data_test, data_test4))
+            # labels_test = np.concatenate((labels_test, labels_test4))
+            # labels_range_test = np.concatenate((labels_range_test, labels_range_test4[1:] + labels_range_test[-1]))
+
+            fig = plt.figure(figsize=(16,8))
             for i in range(0,len(labels_range_train)-1):
                 plt.subplot(2,4,labels_train[i])
                 a = labels_range_train[i]
                 b = labels_range_train[i+1]
                 plt.plot(data_train[a:b,1], -data_train[a:b,0])
                 plt.title(label_names[labels_train[i]-1])
-            fig.canvas.set_window_title('Trajectories of Training Data')
+                plt.tight_layout()
+            plt.suptitle('Trajectories of Hand Centroid')
+            plt.subplots_adjust(top=0.9)
+            fig.canvas.set_window_title('Trajectories of Hand Centroid')
 
 
             N = 12 # Number of Spatio Temporal Features
@@ -113,20 +148,25 @@ for begg_val_idx in range(3,4):
             def plot_STF(STF, labels, idx_feature, plot_name):
                 N = STF.shape[2]
                 num_labels = STF_train.shape[0]
-                fig, ax = plt.subplots()
+                fig, ax = plt.subplots(figsize=(16,8))
+
                 cmap = plt.cm.get_cmap('jet',N)
                 color = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7']
                 for i in range(0,num_labels):
-                    plt.subplot(2,4,labels[i])
-                    plt.scatter(range(0,N), STF[i,idx_feature,:], c=color[labels[i]-1])
-                    plt.xlabel('Keyframes', fontsize=10)
-                    plt.ylabel('Direction', fontsize=10)
+                    ax = plt.subplot(2,4,labels[i])
+                    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                    # ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+                    plt.scatter(range(1,N+1), STF[i,idx_feature,:], c=color[labels[i]-1])
+                    plt.xlabel('Keyframe', fontsize=10)
+                    plt.ylabel('Orientation', fontsize=10)
                     plt.title(label_names[labels[i]-1])
-                    plt.tight_layout()
+                plt.tight_layout()
+                plt.suptitle(plot_name)
+                plt.subplots_adjust(top=0.9)
                 fig.canvas.set_window_title(plot_name)
 
-            plot_STF(STF_train, labels_train, 0, 'STF - Trajectory orientation')
-            plot_STF(STF_train, labels_train, 1, 'STF - Hand orientation')
+            plot_STF(STF_train, labels_train, 0, 'STF - Trajectory Orientation')
+            plot_STF(STF_train, labels_train, 1, 'STF - Hand Orientation')
             # plot_STF(STF_train, labels_train, 2, 'STF - Absolute velocity')
 
             # Train each individual keyframe separately
@@ -135,7 +175,7 @@ for begg_val_idx in range(3,4):
             # print("Predict each Keyframe")
             # print("Correct predictions \t Predicted Labels")
             predictions = np.zeros((len(label_names), len(labels_test)), dtype=np.int)
-            idx_gesture_to_plot = 3
+            idx_gesture_to_plot = 5
             gesture_to_plot = np.zeros((len(label_names), N))
 
             config = configparser.ConfigParser()
@@ -155,11 +195,12 @@ for begg_val_idx in range(3,4):
                 gesture_to_plot[:,i] =  predictions[:,idx_gesture_to_plot]
                 counter += (labels_test == predicted_labels) * 1
 
-            plt.figure()
+            fig = plt.figure()
             for i in range(0,len(label_names)):
                 plt.plot(range(0,N), gesture_to_plot[i,:])
-
             plt.legend(label_names)
+            plt.title("Actual gesture: " + label_names[labels_test[idx_gesture_to_plot]-1])
+            fig.canvas.set_window_title("Thresholds")
 
             # print("Percentage of correct guesses")
             # print(predictions[np.array(labels_test)-1, np.array(range(0,len(labels_test)))] / N)
@@ -188,6 +229,10 @@ for begg_val_idx in range(3,4):
             num_correct_predictions = ((final_predictions == labels_test)*1).sum()
             num_predictions = len(labels_test)
 
+            prediction_given_actual[final_predictions-1, labels_test-1] += 1
+            confusion_matrix = np.transpose(prediction_given_actual.transpose() / prediction_given_actual.sum(axis=1))
+            print("Confusion Matrix")
+            print(confusion_matrix)
 
             print("Final Predictions")
             print(final_predictions)
@@ -201,9 +246,11 @@ for begg_val_idx in range(3,4):
 
             count_correct_predictions += num_correct_predictions
             count_predictions += num_predictions
+            print("Total Accuracy")
+            print("{:.2f}% of {:.2f}% samples".format(count_correct_predictions/count_predictions*100, count_distinctive_predictions/count_all_predictions*100))
 
-print("Total Accuracy")
-print("{:.2f}% of {:.2f}% samples".format(count_correct_predictions/count_predictions*100, count_distinctive_predictions/count_all_predictions*100))
-print((count_correct_predictions_all/count_predictions_all).transpose()*100)
+# print("Total Accuracy")
+# print("{:.2f}% of {:.2f}% samples".format(count_correct_predictions/count_predictions*100, count_distinctive_predictions/count_all_predictions*100))
+# print((count_correct_predictions_all/count_predictions_all).transpose()*100)
 
 plt.show()

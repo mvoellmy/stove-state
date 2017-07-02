@@ -1,0 +1,7 @@
+[paths]
+videos = ../../../../Polybox/Shared/stove-state-data/ssds/videos
+labels = ../../../../Polybox/Shared/stove-state-data/ssds/labels
+
+[misc]
+# M = Miro, I = Ian
+stove_type = M

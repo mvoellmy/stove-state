@@ -8,7 +8,8 @@ Created on Tue Mar 14 10:23:01 2017
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture('../../data/place_noodles.mp4')
+# cap = cv2.VideoCapture('../../data/place_noodles.mp4')
+cap = cv2.VideoCapture('../../../../../Polybox/Shared/stove-state-data/ssds/gestures/segg/6/I_20170501_212055_segg.h264')
 
 # params for ShiTomasi corner detection
 feature_params = dict( maxCorners = 100,
