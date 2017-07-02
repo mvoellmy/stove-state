@@ -13,16 +13,17 @@ from helpers import *
 
 class FoodRecognizer:
 
-    def __init__(self, plate_of_interest, ellipse_smoothing='VOTE', ellipse_method='MAX_ARC'):
+    def __init__(self, plate_of_interest, ellipse_smoothing='VOTE_SLIDE', ellipse_method='CONVEX'):
         # Params
         self._ellipse_smoothing = 'AVERAGE'
         self._ellipse_smoothing = 'RAW'
-        self._ellipse_smoothing = 'VOTE'
         self._ellipse_smoothing = ellipse_smoothing
+        self._ellipse_smoothing = 'VOTE'
 
         self._ellipse_method = 'RANSAC'
         self._ellipse_method = 'CONVEX'
         self._ellipse_method = ellipse_method
+        self._ellipse_methodg = 'MAX_ARC'
 
         self._segment = False
         self._plate_of_interest = plate_of_interest
@@ -37,20 +38,34 @@ class FoodRecognizer:
         self.pan_models_path = self.polybox_path + 'pan_detect/pan_models/'
         self.food_models_path = self.polybox_path + 'pan_detect/food_models/'
 
-        self.pan_model_name = '2017-05-11-16_44_38'
-
         if self._plate_of_interest == 'I_4':
+        # if self._plate_of_interest == 'I_4' or self._plate_of_interest == 'M_4':
+        # if False:
+            # pan
             self.pan_model_name = '2017-05-18-18_25_11'   # I_4 begg1 hog
+            self.pan_model_name = '2017-07-02-03_05_41'   # I_4 Final
+            # food
             self.food_model_name = '2017-05-19-09_20_36'  # I_4 poly rgb_hist
-            self.food_model_name = '2017-06-10-18_23_58'  # I_4 First tf-idf test
-            self.food_model_name = '2017-06-10-18_52_46'  # I_4 SIFT + tf-idf
-            self.food_model_name = '2017-06-04-17_40_02'  # I_4 SIFT
-            self.food_model_name = '2017-06-11-18_44_11'  # I_4 SIFT + tf-idf 2
+            self.food_model_name = '2017-06-11-18_44_11'  # I_4 SIFT + tf-idf 3000 features
 
         elif self._plate_of_interest == 'I_2':
+        # elif self._plate_of_interest == 'I_2' or self._plate_of_interest == 'M_2':
+        # elif False:
+            # pan
             self.pan_model_name = '2017-05-18-17_03_24'   # I_2 segg/scegg hog
-            self.food_model_name = '2017-05-18-14_19_44'  # rgb_hist
+            self.pan_model_name = '2017-06-27-14_08_43'   # I_2 full dataset with 8 directions
+            self.pan_model_name = '2017-06-30-15_27_13'   # I_2 o: 6, (12, 12)
+            # food
+            self.food_model_name = '2017-07-01-22_58_29'  # I_2 SIFT: 6000 k:500
+            self.food_model_name = '2017-07-01-08_03_41'  # I_2 SIFT + tf-idf f: 6000 k:500
 
+        elif self._plate_of_interest == 'M_2' or self._plate_of_interest == 'I_2':
+            self.pan_model_name = '2017-07-02-04_38_13'   # M_2 o: 6, (12, 12)
+            self.food_model_name = '2017-07-02-08_02_09'  # M_2 SIFT + tf-idf f: 3000 k:500
+
+        elif self._plate_of_interest == 'M_4' or self._plate_of_interest == 'I_4':
+            self.pan_model_name = '2017-07-02-05_27_50'   # M_4 o: 6, (12, 12)
+            self.food_model_name = '2017-07-02-10_49_52'  # M_4 SIFT + TF-IDF F: 3000 K:500
         else:
             print('ERROR: Invalid Plate of interest')
 
@@ -120,8 +135,8 @@ class FoodRecognizer:
         self.pan_label_predicted_id = self.pan_model.predict(pan_feature.reshape(1, -1))
         self.pan_label_predicted_name = self._pan_params['labels'][int(self.pan_label_predicted_id)]
 
-        if 'pan' in self.pan_label_predicted_name:
-        # if True:
+        # if 'pan' in self.pan_label_predicted_name:
+        if True:
 
             self.center, self.axes, self.phi = self.pan_locator.find_pan(patch)
 

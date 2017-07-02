@@ -1,5 +1,6 @@
 import cv2
 import random
+import time
 import scipy
 from matplotlib import pyplot as plt
 from math import cos, sin, pi, inf, sqrt
@@ -15,14 +16,20 @@ class PanLocator:
         self._ellipse_method = _ellipse_method
         self._plot_ellipse = _plot_ellipse
         self.ellipse_counter = 0
-        
+
+        if _ellipse_smoothing == 'VOTE_SLIDE':
+            self.sliding_window_size = 50  # unit = [frames]
+        else:
+            self.sliding_window_size = 1   # unit = [frames]
+
+        self.slide_counter = 0
+
         # Vote Parameters and Containers
-        self.res_center = 300
         self.res_phi = 180
         self.res_center = 300
-        self.accu_center = np.zeros((2, self.res_center))
-        self.accu_phi = np.zeros((1, self.res_phi))
-        self.accu_axes = np.zeros((2, self.res_center))
+        self.accu_center = np.zeros((2, self.res_center, self.sliding_window_size))
+        self.accu_phi = np.zeros((1, self.res_phi, self.sliding_window_size))
+        self.accu_axes = np.zeros((2, self.res_center, self.sliding_window_size))
 
         # Best Candidate Parameters
         self.center = []
@@ -50,8 +57,8 @@ class PanLocator:
                 self.center = (self.center * (self.ellipse_counter - 1) + raw_center) / self.ellipse_counter
                 self.axes = (self.axes * (self.ellipse_counter - 1) + raw_axes) / self.ellipse_counter
                 self.phi = (self.phi * (self.ellipse_counter - 1) + raw_phi) / self.ellipse_counter
-        elif self._ellipse_smoothing == 'VOTE':
 
+        elif self._ellipse_smoothing == 'VOTE':
             patch_size = patch.shape
             self.accu_center[0, np.min([self.res_center - 1, abs(int(raw_center[0] / patch_size[0] * self.res_center))])] += 1
             self.accu_center[1, np.min([self.res_center - 1, abs(int(raw_center[1] / patch_size[1] * self.res_center))])] += 1
@@ -68,12 +75,41 @@ class PanLocator:
                 self.axes[1] = np.argmax(self.accu_axes[1, :])*(patch_size[1])/self.res_center
                 self.phi = np.argmax(self.accu_phi)*pi/self.res_phi
 
+        elif self._ellipse_smoothing == 'VOTE_SLIDE':
+
+            patch_size = patch.shape
+
+            self.accu_center[0, :, self.slide_counter] = 0
+            self.accu_center[1, :, self.slide_counter] = 0
+            self.accu_axes[0, :, self.slide_counter] = 0
+            self.accu_axes[1, :, self.slide_counter] = 0
+            self.accu_phi[0, :, self.slide_counter] = 0
+
+            self.accu_center[0, np.min([self.res_center - 1, abs(int(raw_center[0] / patch_size[0] * self.res_center))]), self.slide_counter] += 1
+            self.accu_center[1, np.min([self.res_center - 1, abs(int(raw_center[1] / patch_size[1] * self.res_center))]), self.slide_counter] += 1
+            self.accu_axes[0, np.min([self.res_center - 1, abs(int(raw_axes[0] / (patch_size[0]) * self.res_center))]), self.slide_counter] += 1
+            self.accu_axes[1, np.min([self.res_center - 1, abs(int(raw_axes[1] / (patch_size[1]) * self.res_center))]), self.slide_counter] += 1
+            self.accu_phi[0, int(raw_phi / pi * self.res_phi), self.slide_counter] += 1
+
+            if self.ellipse_counter < 3:
+                self.center, self.axes, self.phi = raw_center, raw_axes, raw_phi
+            else:
+                self.center[0] = np.argmax(np.sum(self.accu_center[0, :, 0:min(self.ellipse_counter, self.sliding_window_size-1)], axis=1)) * patch_size[0] / self.res_center
+                self.center[1] = np.argmax(np.sum(self.accu_center[1, :, 0:min(self.ellipse_counter, self.sliding_window_size-1)], axis=1)) * patch_size[1] / self.res_center
+                self.axes[0] = np.argmax(np.sum(self.accu_axes[0, :, 0:min(self.ellipse_counter, self.sliding_window_size-1)], axis=1)) * (patch_size[0]) / self.res_center
+                self.axes[1] = np.argmax(np.sum(self.accu_axes[1, :, 0:min(self.ellipse_counter, self.sliding_window_size-1)], axis=1)) * (patch_size[1]) / self.res_center
+                self.phi = np.argmax(np.sum(self.accu_phi[0, :, 0:min(self.ellipse_counter, self.sliding_window_size-1)], axis=1))*pi/self.res_phi
+
+            self.slide_counter += 1
+            if self.slide_counter == self.sliding_window_size:
+                self.slide_counter = 0
+
         elif self._ellipse_smoothing == 'RAW':
             self.center, self.axes, self.phi = raw_center, raw_axes, raw_phi
 
         return self.center, self.axes, self.phi
 
-    def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
+    def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='CONVEX'):
         plt.ion()
 
         center_max = [0, 0]
@@ -111,6 +147,7 @@ class PanLocator:
             plt.title('Elipses'), plt.xticks([]), plt.yticks([])
             plt.imshow(img, cmap='gray', zorder=1)
 
+        start_time = time.time()
         if method == 'RANSAC':
             nr_samples = 3
             nr_iterations = 40
@@ -391,6 +428,8 @@ class PanLocator:
 
         else:
             print('ERROR: Wrong Ellipse Method!!')
+
+        # print("Edge filtering Method: {}\nTime: {}".format(method, start_time-time.time()))
 
         if _plot_ellipse:
             # plt.scatter(y, x,color='green', s=1, zorder=2)

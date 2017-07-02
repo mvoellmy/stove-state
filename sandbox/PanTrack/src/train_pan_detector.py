@@ -11,19 +11,19 @@ from random import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
-
+1
 # Own Libraries
 from panlocator import PanLocator
 from helpers import mse, get_HOG, histogram_equalization
 
 # Hog Params
-_feature_params = {'orientations':      4,
+_feature_params = {'orientations':      6,
                    'pixels_per_cell':   (12, 12),
                    'cells_per_block':   (4, 4),
                    'widthPadding':      10}
 
 # Features Info Parameters
-_params = {'stove_type':        'I',
+_params = {'stove_type':        'M',
            'plate_of_interest': 4,
            'feature_type':      'HOG',
            'nr_of_features':    0,
@@ -33,16 +33,27 @@ _params = {'stove_type':        'I',
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-11-15_52_55'  # I_4 begg
-features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
-features_name = '2017-05-18-18_23_14'  # I_4 begg
+# OLD STUFF
+# features_name = '2017-05-11-15_52_55'  # I_4 begg
+# features_name = '2017-05-18-16_59_00'  # I_2 scegg and segg
+# features_name = '2017-05-18-18_23_14'  # I_4 begg
+# features_name = '2017-06-27-12_06_39'  # I_2 orientations 8
+
+features_name = '2017-06-27-23_13_12'  # I_2 orientations 8 (12, 12)
+features_name = '2017-06-28-08_12_52'  # I_2 orientations 8 (10, 10)
+# Final Tests
+features_name = '2017-06-30-15_09_09'  # I_2 orientations 6 (12, 12) trained and tested
+features_name = '2017-07-02-01_58_31'  # I_4 orientations 6 (12, 12)
+features_name = '2017-07-02-01_59_39'  # M_2 orientations 6 (12, 12)
+features_name = '2017-07-02-01_56_48'  # M_4 orientations 6 (12, 12)
+
 
 # Options
 _train_model = True
 _load_features = _train_model
 _get_accurracy = True
-_max_features = 3000
-_test_size = 0.3
+_max_features = 10000
+_test_size = 0.01
 
 _use_mse = True
 _use_rgb = False
@@ -164,7 +175,8 @@ else:
     print('---------------------------')
 
     # Save features
-    if input('Save features? [y/n]').lower() == 'y':
+    # if input('Save features? [y/n]').lower() == 'y':
+    if True:
         f_time_name = time.strftime("%Y-%m-%d-%H_%M_%S")
         features_name = features_path + 'F_' + f_time_name + '.npy'
         labels_name = features_path + 'L_' + f_time_name + '.npy'
@@ -186,13 +198,13 @@ if _train_model:
     # Optimize the parameters by cross-validation
     parameters = [
         # {'kernel': ['rbf'], 'gamma': [0.1, 1], 'C': [1, 100]},
-        # {'kernel': ['linear'], 'C': [1, 50, 100]},
         {'kernel': ['linear'], 'C': [1]},
+        #{'kernel': ['linear'], 'C': [1]},
         # {'kernel': ['poly'], 'degree': [2]}
     ]
 
     # Grid search object with SVM classifier.
-    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=10)
+    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=6, verbose=10)
     print("GridSearch Object created")
     print("Starting training")
     clf.fit(train_data, train_labels)
