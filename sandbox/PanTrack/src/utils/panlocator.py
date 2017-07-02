@@ -1,5 +1,6 @@
 import cv2
 import random
+import time
 import scipy
 from matplotlib import pyplot as plt
 from math import cos, sin, pi, inf, sqrt
@@ -17,7 +18,7 @@ class PanLocator:
         self.ellipse_counter = 0
 
         if _ellipse_smoothing == 'VOTE_SLIDE':
-            self.sliding_window_size = 20  # unit = [frames]
+            self.sliding_window_size = 50  # unit = [frames]
         else:
             self.sliding_window_size = 1   # unit = [frames]
 
@@ -56,6 +57,7 @@ class PanLocator:
                 self.center = (self.center * (self.ellipse_counter - 1) + raw_center) / self.ellipse_counter
                 self.axes = (self.axes * (self.ellipse_counter - 1) + raw_axes) / self.ellipse_counter
                 self.phi = (self.phi * (self.ellipse_counter - 1) + raw_phi) / self.ellipse_counter
+
         elif self._ellipse_smoothing == 'VOTE':
             patch_size = patch.shape
             self.accu_center[0, np.min([self.res_center - 1, abs(int(raw_center[0] / patch_size[0] * self.res_center))])] += 1
@@ -107,7 +109,7 @@ class PanLocator:
 
         return self.center, self.axes, self.phi
 
-    def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='MAX_ARC'):
+    def locate_pan(self, img, rgb=False, histeq=True, _plot_canny=False, _plot_cnt=False, _plot_ellipse=False, method='CONVEX'):
         plt.ion()
 
         center_max = [0, 0]
@@ -145,6 +147,7 @@ class PanLocator:
             plt.title('Elipses'), plt.xticks([]), plt.yticks([])
             plt.imshow(img, cmap='gray', zorder=1)
 
+        start_time = time.time()
         if method == 'RANSAC':
             nr_samples = 3
             nr_iterations = 40
@@ -425,6 +428,8 @@ class PanLocator:
 
         else:
             print('ERROR: Wrong Ellipse Method!!')
+
+        # print("Edge filtering Method: {}\nTime: {}".format(method, start_time-time.time()))
 
         if _plot_ellipse:
             # plt.scatter(y, x,color='green', s=1, zorder=2)

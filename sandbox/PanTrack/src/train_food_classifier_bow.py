@@ -21,7 +21,7 @@ from helpers import *
 
 
 # Features Info Parameters
-_params = {'stove_type':        'I',
+_params = {'stove_type':        'M',
            'plate_of_interest': 4,
            'feature_type':      'SIFT',
            'nr_of_features':    0}
@@ -32,29 +32,32 @@ if _params['feature_type'] == 'RGB_HIST':
 
 elif _params['feature_type'] == 'SIFT':
     _feature_params = {'k': 500,
-                       'tf-idf': True}
+                       'tf-idf': False}
 
 _params['feature_params'] = _feature_params
 
 # Paths
 img_type = '.jpg'
 cfg_path = '../../../cfg/class_cfg.txt'
-features_name = '2017-05-19-07_34_40'  # I_2 scegg and segg #
+# features_name = '2017-05-19-07_34_40'  # I_2 scegg and segg
 features_name = '2017-05-19-09_12_03'
+
+# Final Test
+
 
 _train_model = True
 _load_features = _train_model
 _load_features = False
 _save_features = True
-_max_features = 10000
-_test_size = 0.3
+_max_features = 3000
+_test_size = 0.001
 
 _use_mse = False
 _use_img_shuffle = True
 
 # Output Options
 _plot_patches = False
-_plot_ellipse = True
+_plot_ellipse = False
 _plot_hists = False
 _print_update_rate = 50
 _plot_fails = True
@@ -113,6 +116,8 @@ if _load_features:
     kmeans = pickle.load(features_path + 'K_' + features_name + '.sav', 'rb')
 
 else:
+    start_time = time.time()
+
     for label_nr, label_name in enumerate(label_types):
 
         nr_of_label_features = 0
@@ -200,7 +205,7 @@ else:
     _params['labels'] = label_types
     _params['nr_of_features'] = len(data_s)
 
-    print('Feature extraction finished!')
+    print('Feature extraction finished in {} s!'.format(time.time() - start_time))
     print('---------------------------')
 
     data_vw = np.zeros((len(data_s), _feature_params['k']))  # data_vw: Visual Word matrix [nr_of_imgs, k: nr_of_visual_words]
@@ -212,6 +217,7 @@ else:
         sift_features = np.vstack(data_s)
         # K Means Clustering
         print('Building K-Means Cluster')
+
         kmeans = KMeans(n_clusters=_feature_params['k'], random_state=0).fit(sift_features)
 
         if _feature_params['tf-idf']:
@@ -236,6 +242,8 @@ else:
             data_vw = data_vw * tf * idf
 
             _params['visual_word_idf'] = idf.tolist()
+
+        print('Visual Words finished in {} s'.format(time.time() - start_time))
 
     # Save features
     if _save_features or input('Save features? [y/n]').lower() == 'y':
@@ -267,7 +275,7 @@ if _train_model:
     ]
 
     # Grid search object with SVM classifier.
-    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=-1, verbose=10)
+    clf = GridSearchCV(SVC(), parameters, cv=3, n_jobs=6, verbose=10)
     print("GridSearch Object created")
     print("Starting training")
     clf.fit(train_data, train_labels)
