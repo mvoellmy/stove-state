@@ -9,7 +9,8 @@ The goal of the project was to implement a pipeline which can estimate the state
 
 The project contains a 'gesture_recognizer.py' and 'food_recognizer.py' class which make up the main part of the pipeline. They are used to identify the actions of the cook as well as the pan and the food within the pans.
 
-## Results
+## Results
+
 Results of running the main pipeline can be found here:
 
 [link to playlist](https://www.youtube.com/playlist?list=PLSEh4l-IVdYfFLyzEDrBCAzGmYBqn5qE7)
